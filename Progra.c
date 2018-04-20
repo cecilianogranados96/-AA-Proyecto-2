@@ -12,7 +12,10 @@ float ZOOM_Y = 100.0;
 /// VARIABLES GLOBALES
 GtkWidget   *g_winPrincipal;
 GtkWidget 	*g_areaPintado;
-int 		g_tamanoMatriz;
+int 		g_col;
+int			g_fil;
+
+cairo_t 	*g_cr;
 
 void piso(){
 	
@@ -25,6 +28,7 @@ void pared(){
 
 /// Botón Generar
 void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
+    g_cr = cr;
     GdkRectangle da;            /* GtkDrawingArea size */
     gdouble dx = 1.0; 
     gdouble dy = 1.0; 			/* Pixels between each point */
@@ -43,7 +47,7 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
     cairo_device_to_user_distance (cr, &dx, &dy);
     cairo_clip_extents (cr, &clip_x1, &clip_y1, &clip_x2, &clip_y2);
     
-    cairo_set_source_rgb (cr, 0, 0.6, 0.6);
+    cairo_set_source_rgb (cr, 0, 0.6, 0);
 	cairo_paint (cr);
     
     /*cairo_set_line_width (cr, 0.01);
@@ -60,27 +64,36 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	cairo_set_line_width (cr, 0.01);
     cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
     int c = 1;
-    int n = g_tamanoMatriz; 						
-    double w = clip_x2*2/(n);
-    double t = clip_y2*2/(n)+ 0.0001;
+    //+(0.01*(g_col+1))
+    //+(0.01*(g_fil+1))
+    double w = (clip_x2*2)/g_col;
+    double t = (clip_y2*2)/g_fil;
     double p = clip_x2;
-    double q = clip_y2;
-    printf("\nCon n = %d, hay un w = %f y un t = %f\n", n, w, t);
+    double q = clip_y2 + 0.001;
+    
+    printf("\nMatriz de %d filas y %d columnas, hay un w = %f y un t = %f\n", g_col, g_fil, w, t);
     printf("Clips x: %f, %f\n", clip_x1, clip_x2);
     printf("Clips y: %f, %f\n\n", clip_y1, clip_y2);
+    
     for(double x = clip_x1; x <= p || c == 40; x += w){
 		for(double y = clip_y1; y <= q || c == 40; y += t){
 			printf("Posicion %d: %f = %f, %f = %f\n", c, x, p, y, q);
-			cairo_rectangle (cr, x, y, w, t);
+			cairo_rectangle (cr, x, y, w, t);							//Podemos guardar en una matriz la información de donde está cada cosa
 			c++;
 		}
 	}
 	cairo_stroke (cr);
+	
+	cairo_set_line_width (cr, 0.01);
+	cairo_set_source_rgb (cr, 0, 0.6, 0.6);
+	cairo_rectangle (cr, clip_x1, clip_y1, w, t);
+	cairo_fill (cr);
+    
     gtk_window_resize(GTK_WINDOW(g_winPrincipal), WIDTH, HEIGHT);
 }
 
 void on_btnGenerar_clicked(){
-	GtkWidget *spin, *caja, *dialog;
+	GtkWidget *lblCol, *lblFil, *spinCol, *spinFil, *caja, *dialog;
 	
 	dialog = gtk_dialog_new_with_buttons ("Elegir tamaño de la matriz", GTK_WINDOW(g_winPrincipal) , 
 										  GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, 
@@ -88,14 +101,20 @@ void on_btnGenerar_clicked(){
 										  "_Cancelar", GTK_RESPONSE_REJECT, NULL);
 	
 	caja = GTK_WIDGET(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	spin = gtk_spin_button_new_with_range (0, 2048, 1);
-	
-	gtk_container_add(GTK_CONTAINER(caja), spin);
+	lblFil = gtk_label_new("Filas: ");
+	spinFil = gtk_spin_button_new_with_range (0, 2048, 1);
+	lblCol = gtk_label_new("Columnas: ");
+	spinCol = gtk_spin_button_new_with_range (0, 2048, 1);
+	gtk_container_add(GTK_CONTAINER(caja), lblFil);
+	gtk_container_add(GTK_CONTAINER(caja), spinFil);
+	gtk_container_add(GTK_CONTAINER(caja), lblCol);
+	gtk_container_add(GTK_CONTAINER(caja), spinCol);
 	gtk_widget_show_all(dialog);
 	
 	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (respuesta == GTK_RESPONSE_ACCEPT) {
-		g_tamanoMatriz = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spin));
+		g_fil = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
+		g_col = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
 		g_signal_connect (g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
 	}
 	
@@ -120,7 +139,6 @@ void leer (char nombre[1024]) {
     actualizar_matriz();*/
 }
 
-
 void on_btnLeer_clicked(){
 	GtkWidget *dialog = gtk_file_chooser_dialog_new("Leer Archivo", GTK_WINDOW(g_winPrincipal), 
 													GTK_FILE_CHOOSER_ACTION_OPEN, 
@@ -136,7 +154,6 @@ void on_btnLeer_clicked(){
 }
 
 ///Boton Guardar
-
 void guardar (char nombre[1024]/*,int g_matriz[9][9]*/) {
  	/*int  i, j;
  	char buffer[1024], cadena[1024];
@@ -153,7 +170,6 @@ void guardar (char nombre[1024]/*,int g_matriz[9][9]*/) {
     fclose (archivo); */
 }
 
-
 void on_btnGrabar_clicked(){
 	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Grabar Archivo", GTK_WINDOW(g_winPrincipal), 
 													 GTK_FILE_CHOOSER_ACTION_SAVE, 
@@ -169,7 +185,6 @@ void on_btnGrabar_clicked(){
 	gtk_widget_destroy (dialog);
 }
 
-
 ///Botón Resolver
 void on_btnResolver_clicked(){
 	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(g_winPrincipal), 
@@ -181,7 +196,7 @@ void on_btnResolver_clicked(){
 }
 
 ///Botón Salir
-void on_winPrincipal_destroy () {
+void on_winPrincipal_destroy (){
 	gtk_main_quit();
 }
 
@@ -190,14 +205,17 @@ void on_btnZoomIn_clicked(){
 	ZOOM_X += 100;
 	ZOOM_Y += 100;
 	printf("ZoomIn\n");
+	gtk_widget_queue_draw (g_areaPintado);
 }
-
 
 /// Zoom out
 void on_btnZoomOut_clicked(){
-	ZOOM_X -= 100;
-	ZOOM_Y -= 100;
-	printf("ZoomOut\n");
+	if(ZOOM_X-100 != 0){
+		ZOOM_X -= 100;
+		ZOOM_Y -= 100;
+		printf("ZoomOut\n");
+		gtk_widget_queue_draw (g_areaPintado);
+	}
 }
 
 
@@ -210,9 +228,11 @@ void crearInterfaz(){
 	g_winPrincipal 	= GTK_WIDGET(gtk_builder_get_object(builder, "winPrincipal"));
 	g_areaPintado 	= GTK_WIDGET(gtk_builder_get_object(builder, "areaPintado"));
 	
+	gtk_window_set_position(GTK_WINDOW(g_winPrincipal), GTK_WIN_POS_CENTER);
+	gtk_window_resize(GTK_WINDOW(g_winPrincipal), WIDTH, HEIGHT);
 	gtk_builder_connect_signals(builder, NULL);
+	gtk_widget_show_all(g_winPrincipal);
 	g_object_unref(builder);
-    gtk_widget_show_all(g_winPrincipal);
     gtk_main();
 }
 
