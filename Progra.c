@@ -25,71 +25,50 @@ void pared(){
 	
 }
 
-
-/// Botón Generar
+/**
+ * Botón Generar 
+ * Hay que cambiar esto para que actualize de acuerdo a una matriz o 
+ * lista de datos.
+ **/
 void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
-    g_cr = cr;
-    GdkRectangle da;            /* GtkDrawingArea size */
-    gdouble dx = 1.0; 
-    gdouble dy = 1.0; 			/* Pixels between each point */
-    gdouble clip_x1 = 0.0, clip_x2 = 0.0; 
-    gdouble clip_y1 = 0.0, clip_y2 = 0.0;
-    GdkWindow *window = gtk_widget_get_window(widget);
-
-    /* Determine GtkDrawingArea dimensions */
-    gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);
-
-    /* Change the transformation matrix */
-    cairo_translate (cr, da.width / 2, da.height / 2);
-    cairo_scale (cr, ZOOM_X, -ZOOM_Y);
-
-    /* Determine the data points to calculate (ie. those in the clipping zone) */
-    cairo_device_to_user_distance (cr, &dx, &dy);
-    cairo_clip_extents (cr, &clip_x1, &clip_y1, &clip_x2, &clip_y2);
+    int 			c = 1;
+    double 			w, t, p, q;
+    GdkWindow 		*window;
+    GdkRectangle 	da;
     
+    window = gtk_widget_get_window(widget);
+	
+    /* Determinamos el tamaño de la drawing area y la ponemos en el 
+     * centro del widget.*/
+    gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);
+	cairo_translate (cr, da.width / 2, da.height / 2);
+
+	//Pintamos el fondo
     cairo_set_source_rgb (cr, 0, 0.6, 0);
 	cairo_paint (cr);
-    
-    /*cairo_set_line_width (cr, 0.01);
-    cairo_set_source_rgb (cr, 0, 0, 0);
-    cairo_rectangle (cr, clip_x1, clip_y1, 0.3, 0.3);			//Esquina inferior izquierda
-    cairo_set_source_rgb (cr, 0.2, 0.2, 0.2);
-    cairo_rectangle (cr, clip_x2-0.3, clip_y1, 0.3, 0.3);		//Esquina inferior derecha
-    cairo_set_source_rgb (cr, 0.2, 0.4, 0.4);
-    cairo_rectangle (cr, clip_x1, clip_y2-0.3, 0.3, 0.3); 		//Esquina superior izquierda
-    cairo_set_source_rgb (cr, 0.2, 0.6, 0.6);
-    cairo_rectangle (cr, clip_x2-0.3, clip_y2-0.3, 0.3, 0.3);	//Esquina superior derecha 
-	cairo_stroke (cr);*/
 	
-	cairo_set_line_width (cr, 0.01);
+	//Pintamos los rectangulos
+    cairo_set_line_width (cr, 1);
     cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-    int c = 1;
-    //+(0.01*(g_col+1))
-    //+(0.01*(g_fil+1))
-    double w = (clip_x2*2)/g_col;
-    double t = (clip_y2*2)/g_fil;
-    double p = clip_x2;
-    double q = clip_y2 + 0.001;
     
-    printf("\nMatriz de %d filas y %d columnas, hay un w = %f y un t = %f\n", g_col, g_fil, w, t);
-    printf("Clips x: %f, %f\n", clip_x1, clip_x2);
-    printf("Clips y: %f, %f\n\n", clip_y1, clip_y2);
+    p = (double)-(da.width)/2;		//Inicio de x
+    q = (double)-(da.height)/2;		//Inicio de y
+    w = (double)da.width/g_col;		//Ancho de cada cuadrito
+    t = (double)da.height/g_fil;	//Largo de cada cuadrito
     
-    for(double x = clip_x1; x <= p || c == 40; x += w){
-		for(double y = clip_y1; y <= q || c == 40; y += t){
-			printf("Posicion %d: %f = %f, %f = %f\n", c, x, p, y, q);
-			cairo_rectangle (cr, x, y, w, t);							//Podemos guardar en una matriz la información de donde está cada cosa
+    printf("Matriz de %dx%d\n", g_col, g_fil);
+    printf("\tAncho: %d\t\t\tLargo: %d\n", da.width, da.height);
+    printf("\tInicio x: %f\t\tInicio y: %f\n", p, q);
+    printf("\tAncho celda: %f\t\tLargo celda: %f\n\n", w, t);
+    
+    for(double x = p; x < -p; x += w){
+		for(double y = q; y < -q; y += t){
+			//printf("Posicion %d: %f = %f, %f = %f\n", c, x, -p, y, -q);
+			cairo_rectangle (cr, x, y, w, t);
 			c++;
 		}
 	}
 	cairo_stroke (cr);
-	
-	cairo_set_line_width (cr, 0.01);
-	cairo_set_source_rgb (cr, 0, 0.6, 0.6);
-	cairo_rectangle (cr, clip_x1, clip_y1, w, t);
-	cairo_fill (cr);
-    
-    gtk_window_resize(GTK_WINDOW(g_winPrincipal), WIDTH, HEIGHT);
 }
 
 void on_btnGenerar_clicked(){
