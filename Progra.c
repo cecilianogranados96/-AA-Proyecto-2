@@ -176,20 +176,26 @@ void on_btnGenerar_clicked(){
 
 ///Botón Leer
 void leer (char nombre[1024]) {
-	/*int i = 0, j = 0;
-    char linea[1024];
-    FILE *archivo = fopen(nombre, "r");
+    char cadena1 [1024]; 
+    FILE* fichero;
+    fichero = fopen(nombre, "rt");
+    fgets (cadena1, 1024, fichero);     
+    char * pch = strtok (cadena1," ,");
     
-    while(fgets(linea, 1024, archivo)) {
-        char * pch = strtok (linea," ,");
+
+   int pos = 0;
         while (pch != NULL){
-            g_matriz[i][j] =  atoi(pch);
+            //maze[pos] = atoi(pch);
+            printf("%d", atoi(pch));
             pch = strtok (NULL, " ,"); 
-            j++;
-        } i++; j = 0;
-    }
-    fclose(archivo);
-    actualizar_matriz();*/
+            pos++;
+        }
+    
+
+    
+    fclose(fichero);
+    
+    G_CALLBACK (on_draw);
 }
 
 void on_btnLeer_clicked(){
@@ -208,39 +214,15 @@ void on_btnLeer_clicked(){
 
 ///Boton Guardar
 void guardar (char nombre[1024]) {
-
-    
-    
-
-    
-    char buffer2[1024], cadena2[1024];
-    
- 	FILE *archivo = fopen (nombre, "w+");
-    
-
-    for(int x = 0; x < 15; x++) {
-        
-        
-         sprintf(buffer2, "%d ,", maze[x]);
-         strcat(cadena2, buffer2);
-        
-        
-	}
-    fwrite(cadena2, sizeof(char), sizeof(cadena2), archivo);
-    fclose (archivo); 
-
-    
-    printf("\n\n");
-    
-           char linea[1024];
-    FILE *archivo2 = fopen(nombre, "r");
-    
-    while(fgets(linea, 1024, archivo2)) {
-        printf("%s",linea);
-       
+ FILE* fichero;
+ fichero = fopen(nombre, "w+");
+    for(int x=0; x < (g_col*g_fil); x++){
+        fprintf(fichero, "%d,", maze[x]);
     }
-    fclose(archivo2);
-    
+
+
+fclose(fichero);
+printf("\nProceso completado"); 
     
     
     

@@ -107,31 +107,27 @@ int main(int argc,char *argv[]) {
    maze = (char*)malloc(width * height * sizeof(char));
 
 
-   GenerateMaze(maze, width, height);
+   //GenerateMaze(maze, width, height);
    //ShowMaze(maze, width, height);
 
     
     
-    
-    
-    
-    char buffer[1024], cadena[1024];
- 	FILE *archivo = fopen ("guardar.txt", "w+");
-    int c = 0;
-    for(int i = 0; i < width; i++) {
-        for(int j = 0; j < height; j++) {
-         sprintf(buffer, "%d,", maze[c]);
-         strcat(cadena, buffer);
-         c++;
+     char cadena1 [1024]; 
+    FILE* fichero;
+    fichero = fopen("guardar.txt", "rt");
+    fgets (cadena1, 1024, fichero);     
+    char * pch = strtok (cadena1," ,");
+    int pos = 0;
+        while (pch != NULL){
+            maze[pos] = atoi(pch);
+            printf("%d", atoi(pch));
+            pch = strtok (NULL, " ,"); 
+            pos++;
         }
-	}
-    fwrite(cadena, sizeof(char), sizeof(cadena), archivo);
-    fclose (archivo); 
+    fclose(fichero);
     
     
-    
-    
-    
+    ShowMaze(maze, width, height);
     
     
     
