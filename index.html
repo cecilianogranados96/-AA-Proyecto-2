@@ -1,0 +1,251 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Make an amazing maze</title>
+    <style>
+        form {
+            width: 330px;
+            margin: 20px;
+            background-color: white;
+            padding: 20px;
+        }
+
+        body {
+            background-color: white;
+        }
+
+    </style>
+    <script type="text/javascript">
+        //canvas context
+        var ctx;
+
+        //tile size
+        var w = 30;
+
+        //background colour
+        var bk = "rgb(0,0,0)";
+
+        //wall colour
+        var wc = "rgb(0,0,0)";
+
+        //start colour
+        var sc = "rgb(0,255,0)";
+
+        //end colour
+        var ec = "rgb(255,0,0)";
+
+
+        //live cell colour
+        var lc = "rgb(255,0,255)";
+
+        var IntVar;
+        var width = 600;
+        var height = 600;
+
+        var p;
+        var q;
+
+        //stack of tiles
+        var all = [];
+
+        var holder;
+        var dx;
+        var dy;
+        var vec;
+        var lev;
+        var jump = false;
+        var track = [];
+        var dump = [];
+
+        //stack of visited
+        var pile = [];
+
+        function init() {
+            ctx = document.getElementById('canvas').getContext('2d');
+
+            createMatrix();
+            pickStart();
+
+            intVar = setInterval(blockWatch, 1);
+        }
+
+
+        function createMatrix() {
+            p = Math.floor(width / w);
+            q = Math.floor(height / w);
+            for (var x = 0; x < p; x++) {
+                for (var y = 0; y < q; y++) {
+                    all.push(new tile(x * w, y * w));
+                }
+            }
+        }
+
+        function pickStart() {
+            //pick random start point
+            dx = Math.floor((Math.random() * p));
+            dy = Math.floor((Math.random() * q));
+
+            holder = index(dy, dx);
+            drawPad(all[holder].x, all[holder].y, sc);
+            all[holder].visit = true;
+            pile.push(dy);
+            pile.push(dx);
+        }
+
+        function blockWatch() {
+            console.log(pile.length);
+            if (dx - 1 > -1) {
+                holder = index(dy, dx - 1);
+                if (!all[holder].visit) {
+                    track.push("L");
+                }
+            }
+
+            if (dx + 1 < p) {
+                holder = index(dy, dx + 1);
+                if (!all[holder].visit) {
+                    track.push("R");
+                }
+            }
+
+
+            if (dy - 1 > -1) {
+                holder = index(dy - 1, dx);
+                if (!all[holder].visit) {
+                    track.push("U");
+                }
+            }
+            if (dy + 1 < q) {
+                holder = index(dy + 1, dx);
+                if (!all[holder].visit) {
+                    track.push("D");
+                }
+            }
+
+            if (track.length == 0 && pile.length > 0) {
+
+                dx = pile.pop();
+                dy = pile.pop();
+                jump = true;
+            }
+
+            if (track.length === 0 && pile.length === 0) {
+                clearInterval(intVar);
+            }
+
+            if (!jump) {
+                lev = Math.floor(Math.random() * track.length);
+
+                if (track[lev] == "L") {
+                    holder = index(dy, dx);
+                    all[holder].sides[3] = false;
+                    drawWall(all[holder].walls[3][0], all[holder].walls[3][1], all[holder].walls[3][2], all[holder].walls[3][3], lc);
+                    dx = dx - 1;
+                    holder = index(dy, dx);
+                    all[holder].sides[1] = false;
+                    drawWall(all[holder].walls[1][0], all[holder].walls[1][1], all[holder].walls[1][2], all[holder].walls[1][3], lc);
+
+                } else if (track[lev] == "R") {
+                    holder = index(dy, dx);
+                    all[holder].sides[1] = false;
+                    drawWall(all[holder].walls[1][0], all[holder].walls[1][1], all[holder].walls[1][2], all[holder].walls[1][3], lc);
+
+                    dx = dx + 1;
+                    holder = index(dy, dx);
+                    all[holder].sides[3] = false;
+                    drawWall(all[holder].walls[3][0], all[holder].walls[3][1], all[holder].walls[3][2], all[holder].walls[3][3], lc);
+
+                } else if (track[lev] == "U") {
+                    holder = index(dy, dx);
+                    all[holder].sides[0] = false;
+                    drawWall(all[holder].walls[0][0], all[holder].walls[0][1], all[holder].walls[0][2], all[holder].walls[0][3], lc);
+                    dy = dy - 1;
+                    holder = index(dy, dx);
+                    all[holder].sides[2] = false;
+                    drawWall(all[holder].walls[2][0], all[holder].walls[2][1], all[holder].walls[2][2], all[holder].walls[2][3], lc);
+
+                } else if (track[lev] == "D") {
+                    holder = index(dy, dx);
+                    all[holder].sides[2] = false;
+                    drawWall(all[holder].walls[2][0], all[holder].walls[2][1], all[holder].walls[2][2], all[holder].walls[2][3], lc);
+                    dy = dy + 1;
+                    holder = index(dy, dx);
+                    all[holder].sides[0] = false;
+                    drawWall(all[holder].walls[0][0], all[holder].walls[0][1], all[holder].walls[0][2], all[holder].walls[0][3], lc);
+
+                }
+
+
+                pile.push(dy);
+                pile.push(dx);
+
+                drawPad(all[holder].x, all[holder].y, lc);
+                all[holder].visit = true;
+
+            }
+            jump = false;
+            track = [];
+        }
+
+        function clearAll() {
+            all = [];
+        }
+
+        function index(x, y) {
+            //yx RC notation to point to spot in array
+            var keep = x + y * q;
+            return x + y * q;
+        }
+
+        function tile(x, y) {
+            drawPad(x, y, bk);
+            this.sides = [true, true, true, true];
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            //TOP_RIGHT_BOTTOM_LEFT
+            this.walls = [
+                [x + 1, y, w - 2, 1],
+                [x + (w - 1), y + 1, 1, w - 2],
+                [x + 1, y + (w - 1), w - 2, 1],
+                [x, y + 1, 1, w - 2]
+            ];
+            this.visit = false;
+        }
+
+
+
+        function drawPad(x, y, sf) {
+            ctx.fillStyle = sf;
+            ctx.fillRect(x + 1, y + 1, w - 2, w - 2);
+        }
+
+        function drawWall(x, y, w, b, sf) {
+            ctx.fillStyle = sf;
+            ctx.fillRect(x, y, w, b);
+        }
+
+
+        function change() {
+            clearAll();
+            w = Number(f.hv.value);
+            ctx.clearRect(0, 0, width, height);
+            init();
+            return false;
+        }
+
+    </script>
+</head>
+
+<body onLoad="init();">
+    <canvas id="canvas" width="1200" height="600">
+Your browser doesn't support the HTML5 element canvas.
+</canvas>
+    <form name="f" id="f" onSubmit="return change();">
+        Tile Size: <input name="hv" id="hv" value="30" type="number" min="3" max="100" />
+        <input type="submit" value="CHANGE" />
+    </form>
+</body>
+
+</html>
