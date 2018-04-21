@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 
-int SpwTrR[];
-int SpwTrC[];
+int SpwTrR[4];
+int SpwTrC[4];
 int stp;
 int Entry; 
 int Exit;
+
 
 
 
@@ -198,10 +199,18 @@ int main(int argc,char *argv[]) {
     
    int width = 4; 
    int height = 4;
-    int ar[][height];
-    resolv(width,height,ar[][height]);
+    int ar[width][height];
+    resolv(width,height,ar);
     
     
+    for(int x = 0; x < 4; x += 1){
+		for(int y = 0; y < 4; y += 1){
+			 printf("%d \t",ar[x][y]);
+		}
+        printf("\n");
+	}
     
+    
+
 
 }

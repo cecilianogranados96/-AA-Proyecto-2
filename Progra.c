@@ -1,5 +1,7 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <gtk/gtk.h>
 
 #define WIDTH   640
@@ -25,13 +27,74 @@ void pared(){
 	
 }
 
+
+
+void CarveMaze(char *maze, int width, int height, int x, int y) {
+   int x1, y1;
+   int x2, y2;
+   int dx, dy;
+   int dir, count;
+   dir = rand() % 4;
+   count = 0;
+   while(count < 4) {
+      dx = 0; dy = 0;
+      switch(dir) {
+          case 0:  dx = 1;  break;
+          case 1:  dy = 1;  break;
+          case 2:  dx = -1; break;
+          default: dy = -1; break;
+      }
+      x1 = x + dx;
+      y1 = y + dy;
+      x2 = x1 + dx;
+      y2 = y1 + dy;
+      if(   x2 > 0 && x2 < width && y2 > 0 && y2 < height && maze[y1 * width + x1] == 1 && maze[y2 * width + x2] == 1) {
+         maze[y1 * width + x1] = 0;
+         maze[y2 * width + x2] = 0;
+         x = x2; y = y2;
+         dir = rand() % 4;
+         count = 0;
+      } else {
+         dir = (dir + 1) % 4;
+         count += 1;
+      }
+   }
+
+}
+
+
+void GenerateMaze(char *maze, int width, int height) {
+
+   int x, y;
+   for(x = 0; x < width * height; x++) {
+      maze[x] = 1;
+   }
+   maze[1 * width + 1] = 0;
+   srand(time(0));
+   for(y = 1; y < height; y += 2) {
+      for(x = 1; x < width; x += 2) {
+         CarveMaze(maze, width, height, x, y);
+      }
+   }
+    
+   maze[0 * width + 1] = 0;
+   maze[(height - 1) * width + (width - 2)] = 0;
+
+}
+
+
+
+
+
+
+
 /**
  * Botón Generar 
  * Hay que cambiar esto para que actualize de acuerdo a una matriz o 
  * lista de datos.
  **/
 void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
-    int 			c = 1;
+    int 			c = 0;
     double 			w, t, p, q;
     GdkWindow 		*window;
     GdkRectangle 	da;
@@ -61,13 +124,94 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
     printf("\tInicio x: %f\t\tInicio y: %f\n", p, q);
     printf("\tAncho celda: %f\t\tLargo celda: %f\n\n", w, t);
     
+
+    cairo_stroke (cr);
+    
+//----------------------------------------------------------------------------------------------------------------------------------------
+    
+    
+   
+    
+    
+   char *maze;
+   int width = g_col ;
+   int height = g_fil;
+   maze = (char*)malloc(width * height * sizeof(char));
+   GenerateMaze(maze, width, height);
+    //MOSTAR MAZE
+    
     for(double x = p; x < -p; x += w){
 		for(double y = q; y < -q; y += t){
-			//printf("Posicion %d: %f = %f, %f = %f\n", c, x, -p, y, -q);
-			cairo_rectangle (cr, x, y, w, t);
-			c++;
+	
+            
+            if (maze[c] == 1){
+                //printf("Posicion x = %d y= %d \n", l, s);
+			    cairo_set_source_rgb (cr, 1, 0, 1);
+                cairo_rectangle (cr, x, y, w, t);
+                cairo_fill(cr);
+	            cairo_stroke (cr);
+                
+            }else{
+                   
+                cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+                cairo_rectangle (cr, x, y, w, t);
+                cairo_stroke (cr);
+            }
+            
+            
+            c++;
+            
+            
+            
 		}
 	}
+    
+    
+    
+    
+    /*
+    for(double x = p; x < -p; x += w){
+        for(double y = q; y < -q; y += t){
+			//printf("Posicion %d: %f = %f, %f = %f\n", c, x, -p, y, -q);
+            
+            if (maze[l * width + s] == 1){
+                printf("Posicion x = %d y= %d \n", l, s);
+			
+                cairo_rectangle (cr, x, y, w, t);
+            }
+            
+            c++;
+            s++;
+		}
+        l++;
+	}
+    
+    
+    
+    for(int y = 0; y < height; y++) {
+      for(int x = 0; x < width; x++) {
+          if (maze[y * width + x] == 1){
+              printf("[]");
+              
+              
+              
+              
+              //cairo_rectangle (cr, x, y, w, t);
+              
+            
+          }else{
+              printf("  ");
+          }
+          printf("Posicion x = %d y= %d MAT = %d\n", x, y,(y * width + x));
+        
+      }
+         printf("\n");
+    }
+
+    */
+    
+    
+    cairo_fill(cr);
 	cairo_stroke (cr);
 }
 
