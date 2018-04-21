@@ -48,7 +48,7 @@ void CarveMaze(char *maze, int width, int height, int x, int y) {
       y1 = y + dy;
       x2 = x1 + dx;
       y2 = y1 + dy;
-      if(   x2 > 0 && x2 < width && y2 > 0 && y2 < height && maze[y1 * width + x1] == 1 && maze[y2 * width + x2] == 1) {
+      if(x2 > 0 && x2 < width && y2 > 0 && y2 < height && maze[y1 * width + x1] == 1 && maze[y2 * width + x2] == 1) {
          maze[y1 * width + x1] = 0;
          maze[y2 * width + x2] = 0;
          x = x2; y = y2;
@@ -109,9 +109,17 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	//Pintamos el fondo
     cairo_set_source_rgb (cr, 0, 0.6, 0);
 	cairo_paint (cr);
+    
+              cairo_surface_t *image;
+                image = cairo_image_surface_create_from_png ("data/fondo.png");
+                cairo_set_source_surface (cr, image, 0, 0);
+                cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
+                cairo_paint (cr);
+    
+    
 	
 	//Pintamos los rectangulos
-    cairo_set_line_width (cr, 1);
+    cairo_set_line_width (cr, 0);
     cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
     
     p = (double)-(da.width)/2;		//Inicio de x
@@ -145,14 +153,42 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	
             
             if (maze[c] == 1){
-                //printf("Posicion x = %d y= %d \n", l, s);
-			    cairo_set_source_rgb (cr, 1, 0, 1);
-                cairo_rectangle (cr, x, y, w, t);
-                cairo_fill(cr);
+                
+                cairo_surface_t *surface1;
+                
+                surface1 = cairo_image_surface_create_from_png("data/pared.png");
+                
+                
+                 cairo_pattern_t *pattern1;
+                
+                
+                
+                 pattern1 = cairo_pattern_create_for_surface(surface1);
+                
+                
+                  cairo_set_source(cr, pattern1);
+                  cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
+                  cairo_rectangle (cr, x, y, w, t);
+                  cairo_fill(cr);
+      
+      
+      
+  
+                
+                
+                
+			   // cairo_set_source_rgb (cr, 1, 0, 1);
+                //cairo_rectangle (cr, x, y, w, t);
+                //cairo_fill(cr);
+                
+                
 	            cairo_stroke (cr);
                 
             }else{
-                   
+                
+                
+                
+                
                 cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
                 cairo_rectangle (cr, x, y, w, t);
                 cairo_stroke (cr);
