@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 /* Display the maze. */
@@ -72,6 +73,27 @@ void GenerateMaze(char *maze, int width, int height) {
 }
 
 
+/*
+void guardar (char nombre[1024]) {
+ 	int  i, j,c = 0;
+ 	char buffer[1024], cadena[1024];
+ 	FILE *archivo = fopen (nombre, "w+");
+    
+    for(i = 0; i < g_col; i++) {
+        for(j = 0; j < g_fil; j++) {
+         sprintf(buffer, "%d", maze[c]);
+         strcat(cadena, buffer);
+         c++;
+        }
+	}
+    fwrite(cadena, sizeof(char), sizeof(cadena), archivo);
+    fclose (archivo); 
+    
+    
+    
+}*/
+
+
 int main(int argc,char *argv[]) {
     
    int width = 4; 
@@ -86,9 +108,33 @@ int main(int argc,char *argv[]) {
 
 
    GenerateMaze(maze, width, height);
-   ShowMaze(maze, width, height);
+   //ShowMaze(maze, width, height);
 
-
+    
+    
+    
+    
+    
+    char buffer[1024], cadena[1024];
+ 	FILE *archivo = fopen ("guardar.txt", "w+");
+    int c = 0;
+    for(int i = 0; i < width; i++) {
+        for(int j = 0; j < height; j++) {
+         sprintf(buffer, "%d,", maze[c]);
+         strcat(cadena, buffer);
+         c++;
+        }
+	}
+    fwrite(cadena, sizeof(char), sizeof(cadena), archivo);
+    fclose (archivo); 
+    
+    
+    
+    
+    
+    
+    
+    
 
    exit(EXIT_SUCCESS);
 
