@@ -11,6 +11,8 @@
 /// VARIABLES GLOBALES
 GtkWidget   *g_winPrincipal;
 GtkWidget 	*g_areaPintado;
+GtkWidget	*btnResolver;
+GtkWidget	*btnGrabar;
 int 		g_width;
 int			g_height;
 char        *maze;
@@ -99,7 +101,7 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	
 	gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);	// Determinamos el tamaño de la drawing area y la ponemos en el 
 	cairo_translate (cr, da.width / 2, da.height / 2);						// centro del widget.
-
+	
 	p = (float)-(16*g_width);		//Inicio de x
 	q = (float)-(16*g_height);		//Inicio de y
 	w = (float)da.width/g_width;	//Ancho de cada cuadrito
@@ -109,6 +111,7 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	y_scaling = t / tex_height;
 	
 	cairo_scale (cr, x_scaling, y_scaling);
+	cairo_set_line_width(cr, 0); 
 	
 	//MOSTAR MAZE
 	for(double x = p; x < -p; x += 32){						//Las imagenes son de 32x32
@@ -154,6 +157,8 @@ void on_btnGenerar_clicked(){
 		g_signal_connect (g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
 		maze = (char*)malloc(g_width * g_height * sizeof(char));
 		GenerateMaze(maze);
+		gtk_widget_set_sensitive (btnResolver, TRUE);
+		gtk_widget_set_sensitive (btnGrabar, TRUE);
 	}
 	
 	gtk_widget_destroy (dialog);
@@ -272,6 +277,11 @@ void crearInterfaz(){
 	
 	g_winPrincipal 	= GTK_WIDGET(gtk_builder_get_object(builder, "winPrincipal"));
 	g_areaPintado 	= GTK_WIDGET(gtk_builder_get_object(builder, "areaPintado"));
+	btnResolver = GTK_WIDGET(gtk_builder_get_object(builder, "btnResolver"));
+	btnGrabar = GTK_WIDGET(gtk_builder_get_object(builder, "btnGrabar"));
+	
+	gtk_widget_set_sensitive (btnResolver, FALSE);
+	gtk_widget_set_sensitive (btnGrabar, FALSE);
 	
 	gtk_window_set_position(GTK_WINDOW(g_winPrincipal), GTK_WIN_POS_CENTER);
 	gtk_window_resize(GTK_WINDOW(g_winPrincipal), WIDTH, HEIGHT);
