@@ -15,120 +15,205 @@ GtkWidget	*btnResolver;
 GtkWidget	*btnGrabar;
 int 		g_width;
 int			g_height;
-char        *maze;
 int         c = 0; //TAMAÑO PARA ARCHIVO DE GUARDAR Y LEER
 
+int **laberinto,**spanningTree,*frontierR,*frontierC,n=-1,counter=-1;
 
-///---------------------------------------------------------------------
-///Botón Generar
-void CarveMaze(char *maze, int x, int y) {
-	srand(time(NULL));
-	int x1, y1, x2, y2;
-	int dir, count;
-	int dx, dy;
-	
-	count = 0;
-	dir = rand() % 4;
-	
-	while(count < 4) {
-		dx = dy = 0;
-		switch(dir) {
-			case 0:  dx = 1;  break;
-			case 1:  dy = 1;  break;
-			case 2:  dx = -1; break;
-			default: dy = -1; break;
-		}
-		
-		x1 = x  + dx; 	x2 = x1 + dx;
-		y1 = y  + dy;	y2 = y1 + dy;
-		
-		if (x2 > 0 && y2 > 0 && x2 < g_width && y2 < g_height && 
-			maze[y1 * g_width + x1] == 1 && maze[y2 * g_width + x2] == 1) {
-				maze[y1 * g_width + x1] = 0;
-				gtk_widget_queue_draw (g_areaPintado);
-				maze[y2 * g_width + x2] = 0;
-				gtk_widget_queue_draw (g_areaPintado);
-				x = x2; y = y2;
-				dir = rand() % 4;
-				count = 0;
-		}
-		else {
-			dir = (dir + 1) % 4;
-			count++;
-		}
+void addAdjacent(int rowIndex,int columnIndex){
+	if(laberinto[rowIndex][columnIndex]==0){
+		n++;
+		laberinto[rowIndex][columnIndex]=-1;
+		frontierR[n]=rowIndex;
+		frontierC[n]=columnIndex;
 	}
 }
 
-void GenerateMaze(char *maze) {
-	int x, y;
-	
-	for(x = 0; x < g_width * g_height; x++) {
-		maze[x] = 1;
-		gtk_widget_queue_draw (g_areaPintado);
+void markAdjacent(int rowIndex,int columnIndex){
+	if(rowIndex!=0){
+		addAdjacent(rowIndex-1,columnIndex);
 	}
-	maze[1 * g_width + 1] = 0;
-	gtk_widget_queue_draw (g_areaPintado);
-	for(y = 1; y < g_height; y += 2) {
-		for(x = 1; x < g_width; x += 2) {
-			CarveMaze(maze, x, y);
-		}
+	if(rowIndex!=g_width-1){
+		addAdjacent(rowIndex+1,columnIndex);	
 	}
-	maze[0 * g_width + 1] = 0;
-	gtk_widget_queue_draw (g_areaPintado);
-	maze[(g_height - 1) * g_width + (g_width - 2)] = 0;
-	gtk_widget_queue_draw (g_areaPintado);
+	if(columnIndex!=0){
+		addAdjacent(rowIndex,columnIndex-1);
+	}
+	if(columnIndex!=g_height-1){
+		addAdjacent(rowIndex,columnIndex+1);
+	}
+}
+
+void isAdjacent(int indexR,int indexC,int adjacentR[],int adjacentC[]){
+	if((laberinto[indexR][indexC]==1)||(laberinto[indexR][indexC]==16)){
+		counter++;
+		adjacentR[counter]=indexR;
+		adjacentC[counter]=indexC;
+	}
+}
+
+void asignConection(){
+	int k,adjacentR[4],adjacentC[4],adjacentToConnect,frontierCellR,frontierCellC;
+	if(n==0){
+		k=0;
+	}else{
+		k=rand()%n;
+	}
+	frontierCellR=frontierR[k],frontierCellC=frontierC[k];
+	counter=-1;
+	if(frontierCellR!=0){
+		isAdjacent(frontierCellR-1,frontierCellC,adjacentR,adjacentC);
+	}
+	if(frontierCellR!=g_width-1){
+		isAdjacent(frontierCellR+1,frontierC[k],adjacentR,adjacentC);	
+	}
+	if(frontierCellC!=0){
+		isAdjacent(frontierCellR,frontierC[k]-1,adjacentR,adjacentC);
+	}
+	if(frontierCellC!=g_height-1){
+		isAdjacent(frontierCellR,frontierC[k]+1,adjacentR,adjacentC);
+	}
+	if(counter==0){
+		adjacentToConnect=0;
+	}else{
+		adjacentToConnect=rand()%counter;
+	}
+	if(adjacentR[adjacentToConnect]==frontierCellR-1){
+		spanningTree[adjacentR[adjacentToConnect]][adjacentC[adjacentToConnect]]+=2;
+		spanningTree[frontierCellR][frontierCellC]+=8;
+	}else if(adjacentR[adjacentToConnect]==frontierCellR+1){
+		spanningTree[adjacentR[adjacentToConnect]][adjacentC[adjacentToConnect]]+=8;
+		spanningTree[frontierCellR][frontierCellC]+=2;
+	}else if(adjacentC[adjacentToConnect]==frontierCellC+1){
+		spanningTree[adjacentR[adjacentToConnect]][adjacentC[adjacentToConnect]]+=4;
+		spanningTree[frontierCellR][frontierCellC]+=1;
+	} else{
+		spanningTree[adjacentR[adjacentToConnect]][adjacentC[adjacentToConnect]]+=1;
+		spanningTree[frontierCellR][frontierCellC]+=4;
+	}
+	laberinto[frontierCellR][frontierCellC]=1;
+	markAdjacent(frontierCellR,frontierCellC);
+	frontierR[k]=frontierR[n];
+	frontierC[k]=frontierC[n];
+	n--;
 }
 
 void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	GdkRectangle da;
 	GdkWindow *window;
 	cairo_surface_t *piso, *pared;
-	
-	
 	float w, t, p, q;
 	float x_scaling, y_scaling;
 	float tex_width, tex_height;
 	int filas = 0, columnas = 0;
-	
-	
 	window = gtk_widget_get_window(widget);
-	
 	piso = cairo_image_surface_create_from_png ("data/piso.png");
-	pared = cairo_image_surface_create_from_png("data/pared.png");
 	tex_width 	= cairo_image_surface_get_width (piso);					//Las dos son del mismo tamaño así que ambas imagenes sirven
 	tex_height 	= cairo_image_surface_get_height (piso);
-	
-	
 	gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);	// Determinamos el tamaño de la drawing area y la ponemos en el 
 	cairo_translate (cr, da.width / 2, da.height / 2);						// centro del widget.
-	
 	p = (float)-(16*g_width);		//Inicio de x
 	q = (float)-(16*g_height);		//Inicio de y
 	w = (float)da.width/g_width;	//Ancho de cada cuadrito
 	t = (float)da.height/g_height;	//Largo de cada cuadrito
-	
 	x_scaling = w / tex_width;
 	y_scaling = t / tex_height;
-	
 	cairo_scale (cr, x_scaling, y_scaling);
-	cairo_set_line_width(cr, 0); 
-	
-	//MOSTAR MAZE
-	for(double x = p; x < -p; x += 32){						//Las imagenes son de 32x32
-		for(double y = q; y < -q; y += 32){					//Así que por eso se suma 32 para ir a la siguiente
-			if (maze[(columnas*g_height)+filas] == 1)
-				cairo_set_source_surface(cr, pared, x, y);
-			else
-				cairo_set_source_surface(cr, piso, x, y);
-			cairo_paint(cr);
-			//printf("%d ", maze[(filas*g_height)+columnas]);
-			columnas++;
+	cairo_set_line_width(cr, 1); 
+    
+    int i,j,randomR,randomC;
+    
+	frontierR=(int *)malloc(g_width*g_height*sizeof(int));
+	frontierC=(int *)malloc(g_width*g_height*sizeof(int));
+	spanningTree=(int **)malloc(g_width*sizeof(int *)); // OJO CON ESTO AL LEER
+	laberinto=(int **)malloc(g_width*sizeof(int *));
+	for (i = 0; i < g_width; i++){
+		laberinto[i]=(int *)malloc(g_height*sizeof(int));
+		spanningTree[i]=(int *)malloc(g_height*sizeof(int));
+	}
+  	for (i = 0; i < g_width; i++){
+      		for (j = 0; j < g_height; j++){
+			laberinto[i][j]=0;
+			spanningTree[i][j]=0;
 		}
+	}
+	randomR=rand()%g_width;
+	randomC=rand()%g_height;
+	laberinto[randomR][randomC]=16;
+	markAdjacent(randomR,randomC);
+	asignConection();
+	while(n!=-1){
+		asignConection();
+	}
+
+    
+    /*
+	//ARBOL DE EXPACION
+	for (i = 0;i<g_width;i++){
+ 		for (j = 0;j<g_height;j++){
+			printf("%d\t",spanningTree[i][j]);
+		}
+		printf("\n");
+    }
+    */
+    
+    
+    char buf[1024];
+	for(double x = p; x < -p; x += 32){						//Las imagenes son de 32x32
+		for(double y = q; y < -q; y += 32){		
+            //printf("C:%d F:%d ",columnas,filas);
+    
+                    
+                    
+            if ((columnas == 0 && filas == 0)) { //SACA ESQUINA SUPERIOR
+                sprintf(buf, "data/%d.png", 7);
+            }else{
+                if (((columnas == (g_width-1)) &&  (filas == (g_height-1)))){ //SACA ESQUINA INFERIOR
+                    sprintf(buf, "data/%d.png", 13);
+                }else{
+                    sprintf(buf, "data/%d.png", spanningTree[columnas][filas]); //EL RESTO ESCRIBE LO QUE TINENE EL ARBOL DE EXPANCION
+                }
+            }
+            
+            pared = cairo_image_surface_create_from_png(buf);
+            cairo_set_source_surface(cr, pared, x, y);
+            cairo_paint(cr);
+            columnas++;
+		}
+        //printf("\n");
 		filas++;
 		columnas = 0;
-		//printf("\n");
 	}
-    //printf("\n");
+    
+}
+///---------------------------------------------------------------------
+void leer (char nombre[1024]) {
+	int i = 0, j = 0;
+    char linea[1024];
+    FILE *archivo = fopen(nombre, "r");
+    
+    while(fgets(linea, 1024, archivo)) {
+        char * pch = strtok (linea," ,");
+        while (pch != NULL){
+            spanningTree[i][j] =  atoi(pch);
+            pch = strtok (NULL, " ,"); 
+            j++;
+        } i++; j = 0;
+    }
+    fclose(archivo);
+    
+    //AQUI DEBERIA LLAMAR A ON DRAW    
+}
+void guardar (char nombre[1024]) {
+	FILE* fichero;
+	fichero = fopen(nombre, "w+");
+    for(int i = 0; i < g_width; i++) {
+        for(int j = 0; j < g_height; j++) {
+            fprintf(fichero, "%d,", spanningTree[i][j]);       
+        }
+        fprintf(fichero, "\n");
+	}
+	fclose(fichero);
+	printf("\nProceso completado");
 }
 
 void on_btnGenerar_clicked(){
@@ -141,9 +226,9 @@ void on_btnGenerar_clicked(){
 	
 	caja = GTK_WIDGET(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	lblFil = gtk_label_new("Filas: ");
-	spinFil = gtk_spin_button_new_with_range (1	, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
+	spinFil = gtk_spin_button_new_with_range (4	, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
 	lblCol = gtk_label_new("Columnas: ");
-	spinCol = gtk_spin_button_new_with_range (1, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
+	spinCol = gtk_spin_button_new_with_range (4, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
 	gtk_container_add(GTK_CONTAINER(caja), lblFil);
 	gtk_container_add(GTK_CONTAINER(caja), spinFil);
 	gtk_container_add(GTK_CONTAINER(caja), lblCol);
@@ -155,8 +240,6 @@ void on_btnGenerar_clicked(){
 		g_height = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
 		g_width = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
 		g_signal_connect (g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
-		maze = (char*)malloc(g_width * g_height * sizeof(char));
-		GenerateMaze(maze);
 		gtk_widget_set_sensitive (btnResolver, TRUE);
 		gtk_widget_set_sensitive (btnGrabar, TRUE);
 	}
@@ -164,31 +247,6 @@ void on_btnGenerar_clicked(){
 	gtk_widget_destroy (dialog);
 }
 
-
-///---------------------------------------------------------------------
-///Botón Leer
-void leer (char nombre[1024]) {
-    /*char cadena1 [1024]; 
-    FILE* fichero;
-    fichero = fopen(nombre, "rt");
-    fgets (cadena1, 1024, fichero);     
-    char * pch = strtok (cadena1," ,");
-    
-
-   int pos = 0;
-        while (pch != NULL){
-            //maze[pos] = atoi(pch);
-            printf("%d", atoi(pch));
-            pch = strtok (NULL, " ,"); 
-            pos++;
-        }
-    
-
-    
-    fclose(fichero);
-    
-    G_CALLBACK (on_draw);*/
-}
 
 void on_btnLeer_clicked(){
 	GtkWidget *dialog = gtk_file_chooser_dialog_new("Leer Archivo", GTK_WINDOW(g_winPrincipal), 
@@ -204,19 +262,6 @@ void on_btnLeer_clicked(){
 	gtk_widget_destroy (dialog);
 }
 
-
-///---------------------------------------------------------------------
-///Boton Guardar
-void guardar (char nombre[1024]) {
-	FILE* fichero;
-	fichero = fopen(nombre, "w+");
-    for(int x = 0; x < (g_width * g_height); x++){
-		fprintf(fichero, "%d,", maze[x]);
-    }
-	fclose(fichero);
-	printf("\nProceso completado");
-}
-
 void on_btnGrabar_clicked(){
 	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Grabar Archivo", GTK_WINDOW(g_winPrincipal), 
 													 GTK_FILE_CHOOSER_ACTION_SAVE, 
@@ -227,14 +272,11 @@ void on_btnGrabar_clicked(){
 	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (respuesta == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename (chooser);
-		guardar(filename/*, g_matriz*/);
+		guardar(filename);
 	}
 	gtk_widget_destroy (dialog);
 }
 
-
-///---------------------------------------------------------------------
-///Botón Resolver
 void on_btnResolver_clicked(){
 	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(g_winPrincipal), 
 												GTK_DIALOG_DESTROY_WITH_PARENT, 
@@ -244,9 +286,6 @@ void on_btnResolver_clicked(){
 	gtk_widget_destroy (dialog);
 }
 
-
-///---------------------------------------------------------------------
-///Botón Salir
 void on_winPrincipal_destroy (){
 	gtk_main_quit();
 }
@@ -257,6 +296,8 @@ void on_winPrincipal_destroy (){
 void on_btnZoomIn_clicked(){
 	printf("ZoomIn\n");
 	gtk_widget_queue_draw (g_areaPintado);
+    //cairo_scale(g_areaPintado, 0.7, 0.7);
+    
 }
 
 
@@ -268,8 +309,6 @@ void on_btnZoomOut_clicked(){
 }
 
 
-///---------------------------------------------------------------------
-///INTERFAZ
 void crearInterfaz(){
 	GtkBuilder  *builder;
 	builder = gtk_builder_new();
@@ -291,7 +330,6 @@ void crearInterfaz(){
     gtk_main();   
 }
 
-///MAIN
 int main(int argc, char **argv)
 {
 	srand(time(NULL));
