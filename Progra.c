@@ -8,141 +8,124 @@
 #define WIDTH   640
 #define HEIGHT  500
 
-float ZOOM_X = 100.0;
-float ZOOM_Y = 100.0;
-
-
 /// VARIABLES GLOBALES
 GtkWidget   *g_winPrincipal;
 GtkWidget 	*g_areaPintado;
-int 		g_col;
-int			g_fil;
+int 		g_width;
+int			g_height;
 char        *maze;
-cairo_t 	*g_cr;
 int         c = 0; //TAMAÑO PARA ARCHIVO DE GUARDAR Y LEER
 
-void CarveMaze(char *maze, int width, int height, int x, int y) {
-   int x1, y1;
-   int x2, y2;
-   int dx, dy;
-   int dir, count;
-   dir = rand() % 4;
-   count = 0;
-   while(count < 4) {
-      dx = 0; dy = 0;
-      switch(dir) {
-          case 0:  dx = 1;  break;
-          case 1:  dy = 1;  break;
-          case 2:  dx = -1; break;
-          default: dy = -1; break;
-      }
-      x1 = x + dx;
-      y1 = y + dy;
-      x2 = x1 + dx;
-      y2 = y1 + dy;
-      if(x2 > 0 && x2 < width && y2 > 0 && y2 < height && maze[y1 * width + x1] == 1 && maze[y2 * width + x2] == 1) {
-         maze[y1 * width + x1] = 0;
-         maze[y2 * width + x2] = 0;
-         x = x2; y = y2;
-         dir = rand() % 4;
-         count = 0;
-      } else {
-         dir = (dir + 1) % 4;
-         count += 1;
-      }
-   }
 
+///---------------------------------------------------------------------
+///Botón Generar
+void CarveMaze(char *maze, int x, int y) {
+	srand(time(NULL));
+	int x1, y1, x2, y2;
+	int dir, count;
+	int dx, dy;
+	
+	count = 0;
+	dir = rand() % 4;
+	
+	while(count < 4) {
+		dx = dy = 0;
+		switch(dir) {
+			case 0:  dx = 1;  break;
+			case 1:  dy = 1;  break;
+			case 2:  dx = -1; break;
+			default: dy = -1; break;
+		}
+		
+		x1 = x  + dx; 	x2 = x1 + dx;
+		y1 = y  + dy;	y2 = y1 + dy;
+		
+		if (x2 > 0 && y2 > 0 && x2 < g_width && y2 < g_height && 
+			maze[y1 * g_width + x1] == 1 && maze[y2 * g_width + x2] == 1) {
+				maze[y1 * g_width + x1] = 0;
+				gtk_widget_queue_draw (g_areaPintado);
+				maze[y2 * g_width + x2] = 0;
+				gtk_widget_queue_draw (g_areaPintado);
+				x = x2; y = y2;
+				dir = rand() % 4;
+				count = 0;
+		}
+		else {
+			dir = (dir + 1) % 4;
+			count++;
+		}
+	}
 }
 
-void GenerateMaze(char *maze, int width, int height) {
-
-   int x, y;
-   for(x = 0; x < width * height; x++) {
-      maze[x] = 1;
-   }
-   maze[1 * width + 1] = 0;
-   srand(time(0));
-   for(y = 1; y < height; y += 2) {
-      for(x = 1; x < width; x += 2) {
-         CarveMaze(maze, width, height, x, y);
-      }
-   }
-    
-   maze[0 * width + 1] = 0;
-   maze[(height - 1) * width + (width - 2)] = 0;
-
+void GenerateMaze(char *maze) {
+	int x, y;
+	
+	for(x = 0; x < g_width * g_height; x++) {
+		maze[x] = 1;
+		gtk_widget_queue_draw (g_areaPintado);
+	}
+	maze[1 * g_width + 1] = 0;
+	gtk_widget_queue_draw (g_areaPintado);
+	for(y = 1; y < g_height; y += 2) {
+		for(x = 1; x < g_width; x += 2) {
+			CarveMaze(maze, x, y);
+		}
+	}
+	maze[0 * g_width + 1] = 0;
+	gtk_widget_queue_draw (g_areaPintado);
+	maze[(g_height - 1) * g_width + (g_width - 2)] = 0;
+	gtk_widget_queue_draw (g_areaPintado);
 }
 
 void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
-    double 			w, t, p, q;
-    GdkWindow 		*window;
-    GdkRectangle 	da;
-    
-    window = gtk_widget_get_window(widget);
+	GdkRectangle da;
+	GdkWindow *window;
+	cairo_surface_t *piso, *pared;
 	
-    /* Determinamos el tamaño de la drawing area y la ponemos en el 
-     * centro del widget.*/
-    gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);
-	cairo_translate (cr, da.width / 2, da.height / 2);
-
-	//Pintamos el fondo
-    cairo_set_source_rgb (cr, 0, 0.6, 0);
-	cairo_paint (cr);
-    
-    cairo_surface_t *image;
-    image = cairo_image_surface_create_from_png ("data/fondo.png");
-    cairo_set_source_surface (cr, image, 0, 0);
-    cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
-    cairo_paint (cr);
-    
-    
 	
-	//Pintamos los rectangulos
-    cairo_set_line_width (cr, 0);
-    cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-    
-    p = (double)-(da.width)/2;		//Inicio de x
-    q = (double)-(da.height)/2;		//Inicio de y
-    w = (double)da.width/g_col;		//Ancho de cada cuadrito
-    t = (double)da.height/g_fil;	//Largo de cada cuadrito
-    
-    //printf("Matriz de %dx%d\n", g_col, g_fil);
-    //printf("\tAncho: %d\t\t\tLargo: %d\n", da.width, da.height);
-    //printf("\tInicio x: %f\t\tInicio y: %f\n", p, q);
-    //printf("\tAncho celda: %f\t\tLargo celda: %f\n\n", w, t);
-    
+	float w, t, p, q;
+	float x_scaling, y_scaling;
+	float tex_width, tex_height;
+	int filas = 0, columnas = 0;
+	
+	
+	window = gtk_widget_get_window(widget);
+	
+	piso = cairo_image_surface_create_from_png ("data/piso.png");
+	pared = cairo_image_surface_create_from_png("data/pared.png");
+	tex_width 	= cairo_image_surface_get_width (piso);					//Las dos son del mismo tamaño así que ambas imagenes sirven
+	tex_height 	= cairo_image_surface_get_height (piso);
+	
+	
+	gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);	// Determinamos el tamaño de la drawing area y la ponemos en el 
+	cairo_translate (cr, da.width / 2, da.height / 2);						// centro del widget.
 
-    cairo_stroke (cr);
-    
-//----------------------------------------------------------------------------------------------------------------------------------------
-
-    cairo_surface_t *surface1;
-    surface1 = cairo_image_surface_create_from_png("data/pared.png");
-    cairo_pattern_t *pattern1;
-   int width = g_col ;
-   int height = g_fil;
-   maze = (char*)malloc(width * height * sizeof(char));
-   GenerateMaze(maze, width, height);
-    //MOSTAR MAZE
-    for(double x = p; x < -p; x += w){
-		for(double y = q; y < -q; y += t){
-            if (maze[c] == 1){
-                  pattern1 = cairo_pattern_create_for_surface(surface1); 
-                  cairo_set_source(cr, pattern1);
-                  cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
-                  cairo_rectangle (cr, x, y, w, t);
-                  cairo_fill(cr);                
-	              cairo_stroke (cr);
-            }else{
-                cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-                cairo_rectangle (cr, x, y, w, t);
-                cairo_stroke (cr);
-            }
-            c++;
+	p = (float)-(16*g_width);		//Inicio de x
+	q = (float)-(16*g_height);		//Inicio de y
+	w = (float)da.width/g_width;	//Ancho de cada cuadrito
+	t = (float)da.height/g_height;	//Largo de cada cuadrito
+	
+	x_scaling = w / tex_width;
+	y_scaling = t / tex_height;
+	
+	cairo_scale (cr, x_scaling, y_scaling);
+	
+	//MOSTAR MAZE
+	for(double x = p; x < -p; x += 32){						//Las imagenes son de 32x32
+		for(double y = q; y < -q; y += 32){					//Así que por eso se suma 32 para ir a la siguiente
+			if (maze[(columnas*g_height)+filas] == 1)
+				cairo_set_source_surface(cr, pared, x, y);
+			else
+				cairo_set_source_surface(cr, piso, x, y);
+			cairo_paint(cr);
+			//printf("%d ", maze[(filas*g_height)+columnas]);
+			columnas++;
 		}
-	} 
-    cairo_fill(cr);
-	cairo_stroke (cr);
+		filas++;
+		columnas = 0;
+		//printf("\n");
+	}
+    //printf("\n");
 }
 
 void on_btnGenerar_clicked(){
@@ -155,9 +138,9 @@ void on_btnGenerar_clicked(){
 	
 	caja = GTK_WIDGET(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	lblFil = gtk_label_new("Filas: ");
-	spinFil = gtk_spin_button_new_with_range (4, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
+	spinFil = gtk_spin_button_new_with_range (1	, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
 	lblCol = gtk_label_new("Columnas: ");
-	spinCol = gtk_spin_button_new_with_range (4, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
+	spinCol = gtk_spin_button_new_with_range (1, 2048, 1); //OJO QUITAR EL 4 PARA PRODUCCION
 	gtk_container_add(GTK_CONTAINER(caja), lblFil);
 	gtk_container_add(GTK_CONTAINER(caja), spinFil);
 	gtk_container_add(GTK_CONTAINER(caja), lblCol);
@@ -166,17 +149,21 @@ void on_btnGenerar_clicked(){
 	
 	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (respuesta == GTK_RESPONSE_ACCEPT) {
-		g_fil = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
-		g_col = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
+		g_height = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
+		g_width = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
 		g_signal_connect (g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
+		maze = (char*)malloc(g_width * g_height * sizeof(char));
+		GenerateMaze(maze);
 	}
 	
 	gtk_widget_destroy (dialog);
 }
 
+
+///---------------------------------------------------------------------
 ///Botón Leer
 void leer (char nombre[1024]) {
-    char cadena1 [1024]; 
+    /*char cadena1 [1024]; 
     FILE* fichero;
     fichero = fopen(nombre, "rt");
     fgets (cadena1, 1024, fichero);     
@@ -195,7 +182,7 @@ void leer (char nombre[1024]) {
     
     fclose(fichero);
     
-    G_CALLBACK (on_draw);
+    G_CALLBACK (on_draw);*/
 }
 
 void on_btnLeer_clicked(){
@@ -212,22 +199,17 @@ void on_btnLeer_clicked(){
 	gtk_widget_destroy (dialog);
 }
 
+
+///---------------------------------------------------------------------
 ///Boton Guardar
 void guardar (char nombre[1024]) {
- FILE* fichero;
- fichero = fopen(nombre, "w+");
-    for(int x=0; x < (g_col*g_fil); x++){
-        fprintf(fichero, "%d,", maze[x]);
+	FILE* fichero;
+	fichero = fopen(nombre, "w+");
+    for(int x = 0; x < (g_width * g_height); x++){
+		fprintf(fichero, "%d,", maze[x]);
     }
-
-
-fclose(fichero);
-printf("\nProceso completado"); 
-    
-    
-    
-    
-    
+	fclose(fichero);
+	printf("\nProceso completado");
 }
 
 void on_btnGrabar_clicked(){
@@ -245,6 +227,8 @@ void on_btnGrabar_clicked(){
 	gtk_widget_destroy (dialog);
 }
 
+
+///---------------------------------------------------------------------
 ///Botón Resolver
 void on_btnResolver_clicked(){
 	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(g_winPrincipal), 
@@ -255,30 +239,31 @@ void on_btnResolver_clicked(){
 	gtk_widget_destroy (dialog);
 }
 
+
+///---------------------------------------------------------------------
 ///Botón Salir
 void on_winPrincipal_destroy (){
 	gtk_main_quit();
 }
 
+
+///---------------------------------------------------------------------
 /// Zoom in
 void on_btnZoomIn_clicked(){
-	ZOOM_X += 100;
-	ZOOM_Y += 100;
 	printf("ZoomIn\n");
 	gtk_widget_queue_draw (g_areaPintado);
 }
 
+
+///---------------------------------------------------------------------
 /// Zoom out
 void on_btnZoomOut_clicked(){
-	if(ZOOM_X-100 != 0){
-		ZOOM_X -= 100;
-		ZOOM_Y -= 100;
-		printf("ZoomOut\n");
-		gtk_widget_queue_draw (g_areaPintado);
-	}
+	printf("ZoomOut\n");
+	gtk_widget_queue_draw (g_areaPintado);
 }
 
 
+///---------------------------------------------------------------------
 ///INTERFAZ
 void crearInterfaz(){
 	GtkBuilder  *builder;
@@ -299,6 +284,7 @@ void crearInterfaz(){
 ///MAIN
 int main(int argc, char **argv)
 {
+	srand(time(NULL));
 	gtk_init(&argc, &argv);
 	crearInterfaz();
 	return 0;
