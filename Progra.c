@@ -13,13 +13,14 @@ GtkWidget   *g_winPrincipal;
 GtkWidget 	*g_areaPintado;
 GtkWidget	*btnResolver;
 GtkWidget	*btnGrabar;
-int 		g_width;
-int			g_height;
-int         c = 0; //TAMAÑO PARA ARCHIVO DE GUARDAR Y LEER
 
-int **laberinto, **arbolExpansion;
-int *filaFrontera, *columnaFrontera;
-int n=-1, contador=-1;
+int n = -1, contador = -1, c = 0; //TAMAÑO PARA ARCHIVO DE GUARDAR Y LEER
+int g_filas, g_columnas;
+int	g_zoomX = 0, g_zoomY = 0;
+
+char **laberinto, **arbolExpansion;
+char *filaFrontera, *columnaFrontera;
+
 
 ///---------------------------------------------------------------------
 /// Botón Generar
@@ -35,11 +36,11 @@ void agregarAdyacente(int filaIndice,int columnaIndice){
 void marcarAdyacente(int filaIndice,int columnaIndice){
 	if(filaIndice)
 		agregarAdyacente(filaIndice-1, columnaIndice);
-	if(filaIndice != g_width-1)
+	if(filaIndice != g_filas-1)
 		agregarAdyacente(filaIndice+1, columnaIndice);	
 	if(columnaIndice)
 		agregarAdyacente(filaIndice, columnaIndice-1);
-	if(columnaIndice != g_height-1)
+	if(columnaIndice != g_columnas-1)
 		agregarAdyacente(filaIndice, columnaIndice+1);
 }
 
@@ -53,8 +54,9 @@ void esAdyacente(int filaIndice,int columnaIndice,int filaAdyacente[],int column
 }
 
 void asignarConexion(){
-	int k,adyacenteAConectar,posFronteraF,posFronteraC;
-	int filaAdyacente[4],columnaAdyacente[4];
+	int k, adyacenteAConectar; 
+	int posFronteraF, posFronteraC;
+	int filaAdyacente[4], columnaAdyacente[4];
 	
 	if(!n) k = 0;
 	else k = rand()%n;
@@ -65,11 +67,11 @@ void asignarConexion(){
 	
 	if(posFronteraF)
 		esAdyacente(posFronteraF-1, posFronteraC, filaAdyacente, columnaAdyacente);
-	if(posFronteraF != g_width-1)
+	if(posFronteraF != g_filas-1)
 		esAdyacente(posFronteraF+1, columnaFrontera[k], filaAdyacente, columnaAdyacente);
 	if(posFronteraC)
 		esAdyacente(posFronteraF, columnaFrontera[k]-1, filaAdyacente, columnaAdyacente);
-	if(posFronteraC != g_height-1)
+	if(posFronteraC != g_columnas-1)
 		esAdyacente(posFronteraF, columnaFrontera[k]+1, filaAdyacente, columnaAdyacente);
 	if(!contador) adyacenteAConectar = 0;
 	
@@ -100,27 +102,26 @@ void asignarConexion(){
 }
 
 void generarLaberinto(){
-	int i,j,randomR,randomC;
+	int i, j, randomR, randomC;
     
-    columnaFrontera	= (int *)malloc(g_width*g_height*sizeof(int));
-	filaFrontera	= (int *)malloc(g_width*g_height*sizeof(int));
-	arbolExpansion	= (int **)malloc(g_width*sizeof(int *));
-	laberinto	 	= (int **)malloc(g_width*sizeof(int *));
+    columnaFrontera	= (char *)malloc(g_filas*g_columnas*sizeof(char));
+	filaFrontera	= (char *)malloc(g_filas*g_columnas*sizeof(char));
+	arbolExpansion	= (char **)malloc(g_filas*sizeof(char *));
+	laberinto	 	= (char **)malloc(g_filas*sizeof(char *));
 	
-	for (i = 0; i < g_width; i++){
-		laberinto[i]	= (int *)malloc(g_height*sizeof(int));
-		arbolExpansion[i]	= (int *)malloc(g_height*sizeof(int));
+	for (i = 0; i < g_filas; i++){
+		laberinto[i]		= (char *)malloc(g_columnas*sizeof(char));
+		arbolExpansion[i]	= (char *)malloc(g_columnas*sizeof(char));
 	}
   	
-  	for (i = 0; i < g_width; i++){
-      	for (j = 0; j < g_height; j++){
+  	for (i = 0; i < g_filas; i++)
+      	for (j = 0; j < g_columnas; j++){
 			laberinto[i][j]	= 0;
 			arbolExpansion[i][j] = 0;
 		}
-	}
 	
-	randomR	= rand()%g_width;
-	randomC	= rand()%g_height;
+	randomR	= rand()%g_filas;
+	randomC	= rand()%g_columnas;
 	laberinto[randomR][randomC] = 16;
 	
 	marcarAdyacente(randomR,randomC);
@@ -131,9 +132,9 @@ void generarLaberinto(){
 		asignarConexion();
 
 
-	//ARBOL DE EXPANCION
-	for (i = 0;i < g_width;i++){
- 		for (j = 0;j < g_height;j++)
+	//ARBOL DE EXPANSION
+	for (i = 0;i < g_filas;i++){
+ 		for (j = 0;j < g_columnas;j++)
 			printf("%d\t",arbolExpansion[i][j]);
 		printf("\n");
     }
@@ -141,54 +142,49 @@ void generarLaberinto(){
 }
 
 void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
-	GdkRectangle da;
-	GdkWindow *window;
-	cairo_surface_t *piso, *pared;
 	float w, t, p, q;
 	float x_scaling, y_scaling;
 	float tex_width, tex_height;
 	int filas = 0, columnas = 0;
 	
+	GdkRectangle da;
+	GdkWindow *window;
+	cairo_surface_t *celda;
+	
 	window = gtk_widget_get_window(widget);
-	piso = cairo_image_surface_create_from_png ("data/piso.png");
-	tex_width 	= cairo_image_surface_get_width (piso);
-	tex_height 	= cairo_image_surface_get_height (piso);
-	gdk_window_get_geometry (window, &da.x, &da.y, &da.width, &da.height);	// Determinamos el tamaño de la drawing area y la ponemos en el 
+	celda = cairo_image_surface_create_from_png("data/1.png");
+	tex_width 	= cairo_image_surface_get_width(celda);
+	tex_height 	= cairo_image_surface_get_height(celda);
+	gdk_window_get_geometry(window, &da.x, &da.y, &da.width, &da.height);	// Determinamos el tamaño de la drawing area y la ponemos en el 
 	cairo_translate (cr, da.width / 2, da.height / 2);						// centro del widget.
 	
-	q = (float)16*g_width;		//Inicio de x
-	p = (float)16*g_height;		//Inicio de y
-	w = (float)da.width/g_width;	//Ancho de cada cuadrito
-	t = (float)da.height/g_height;	//Largo de cada cuadrito
-	x_scaling = (w / tex_width);
-	y_scaling = (t / tex_height);
+	p = (float)16*(g_columnas-g_zoomX);			//Inicio de x
+	q = (float)16*(g_filas-g_zoomY);			//Inicio de y
+	
+	w = (float)da.width/(g_columnas-g_zoomX);		//Ancho de cada cuadrito
+	t = (float)da.height/(g_filas-g_zoomY);		//Largo de cada cuadrito
+	x_scaling = w / tex_width;
+	y_scaling = t / tex_height;
 	cairo_scale (cr, x_scaling, y_scaling);
 	cairo_set_line_width(cr, 0); 
-    
-    
+	
     char buf[2048];
-    
-	for(double x = -p; x < p; x += 32){						//Las imagenes son de 32x32
-		for(double y = -q; y < q; y += 32){
-			//printf("R: %d y C: %d\n",filas, columnas);
+	for(int x = -p; x < p; x += 32){						//Las imagenes son de 32x32
+		for(int y = -q; y < q; y += 32){
 			if ((columnas == 0 && filas == 0)) 				//SACA ESQUINA SUPERIOR
                 sprintf(buf, "data/%d.png", 7);
-            else if(columnas == (g_width-1) && filas == (g_height-1)) //SACA ESQUINA INFERIOR
+            else if(columnas == (g_filas-1) && filas == (g_columnas-1)) //SACA ESQUINA INFERIOR
                 sprintf(buf, "data/%d.png", 13);
             else
-                sprintf(buf, "data/%d.png", arbolExpansion[filas][columnas]); //EL RESTO ESCRIBE LO QUE TINENE EL ARBOL DE EXPANSION
-            printf("\nfilas: %d columnas: %d\n", filas, columnas);
-            pared = cairo_image_surface_create_from_png(buf);
-            printf("x: %f y: %f\t", x, y);
-            cairo_set_source_surface(cr, pared, x, y);
+                sprintf(buf, "data/%d.png", arbolExpansion[filas][columnas]); //EL RESTO ESCRIBE LO QUE TIENE EL ARBOL DE EXPANSION
+            celda = cairo_image_surface_create_from_png(buf);
+            cairo_set_source_surface(cr, celda, x, y);
             cairo_paint(cr);
             filas++;
 		}
-		printf("\n");
 		filas = 0;
 		columnas++;
 	}
-    
 }
 
 void on_btnGenerar_clicked(){
@@ -215,13 +211,12 @@ void on_btnGenerar_clicked(){
 	if (respuesta == GTK_RESPONSE_ACCEPT) {
 		gtk_widget_set_sensitive (btnResolver, TRUE);
 		gtk_widget_set_sensitive (btnGrabar, TRUE);
-		g_height = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
-		g_width  = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
+		g_columnas = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
+		g_filas  = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
 		
 		g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
-		//
+		
 		generarLaberinto();
-		//
 	}
 
 	gtk_widget_destroy (dialog);
@@ -245,7 +240,7 @@ void leer (char nombre[1024]) {
     }
     fclose(archivo);
     
-    //AQUI DEBERIA LLAMAR A ON DRAW    
+    gtk_widget_queue_draw (g_areaPintado);
 }
 
 void on_btnLeer_clicked(){
@@ -268,8 +263,8 @@ void on_btnLeer_clicked(){
 void guardar (char nombre[1024]) {
 	FILE* fichero;
 	fichero = fopen(nombre, "w+");
-    for(int i = 0; i < g_width; i++) {
-        for(int j = 0; j < g_height; j++) {
+    for(int i = 0; i < g_filas; i++) {
+        for(int j = 0; j < g_columnas; j++) {
             fprintf(fichero, "%d,", arbolExpansion[i][j]);       
         }
         fprintf(fichero, "\n");
@@ -317,9 +312,11 @@ void on_winPrincipal_destroy (){
 /// Zoom in
 void on_btnZoomIn_clicked(){
 	printf("ZoomIn\n");
+	if(g_zoomX < g_columnas-1)
+		g_zoomX += 1;
+	if(g_zoomY < g_filas-1)
+		g_zoomY += 1;
 	gtk_widget_queue_draw (g_areaPintado);
-    //cairo_scale(g_areaPintado, 0.7, 0.7);
-    
 }
 
 
@@ -327,6 +324,10 @@ void on_btnZoomIn_clicked(){
 /// Zoom out
 void on_btnZoomOut_clicked(){
 	printf("ZoomOut\n");
+	if(g_zoomX > 0)
+		g_zoomX -= 1;
+	if(g_zoomY > 0)
+		g_zoomY -= 1;
 	gtk_widget_queue_draw (g_areaPintado);
 }
 
