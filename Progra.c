@@ -21,6 +21,24 @@ int	g_zoomX = 0, g_zoomY = 0;
 char **laberinto, **arbolExpansion;
 char *filaFrontera, *columnaFrontera;
 
+///---------------------------------------------------------------------
+/// Zoom in/out
+void mouse_scroll(GtkWidget *widget, GdkEventScroll *event, gpointer user_data){
+	if(event->direction == GDK_SCROLL_UP){			//ZOOM IN
+		if(g_zoomX < g_columnas-1)
+			g_zoomX += 1;
+		if(g_zoomY < g_filas-1)
+			g_zoomY += 1;
+	}
+	else if(event->direction == GDK_SCROLL_DOWN){	//ZOOM OUT
+		if(g_zoomX > 0)
+			g_zoomX -= 1;
+		if(g_zoomY > 0)
+			g_zoomY -= 1;
+	}
+	gtk_widget_queue_draw (g_areaPintado);
+}
+
 
 ///---------------------------------------------------------------------
 /// Botón Generar
@@ -166,17 +184,22 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	x_scaling = w / tex_width;
 	y_scaling = t / tex_height;
 	cairo_scale (cr, x_scaling, y_scaling);
-	cairo_set_line_width(cr, 0); 
 	
+	cairo_set_source_rgba(cr, 0, 0, 0, 0);
+	cairo_set_line_width(cr, 0);
+    
     char buf[2048];
 	for(int x = -p; x < p; x += 32){						//Las imagenes son de 32x32
 		for(int y = -q; y < q; y += 32){
+			sprintf(buf, "data/%d.png", arbolExpansion[filas][columnas]);
+			celda = cairo_image_surface_create_from_png(buf);
+            cairo_set_source_surface(cr, celda, x, y);
+            cairo_paint(cr);
+            
 			if ((columnas == 0 && filas == 0)) 				//SACA ESQUINA SUPERIOR
-                sprintf(buf, "data/%d.png", 7);
-            else if(columnas == (g_filas-1) && filas == (g_columnas-1)) //SACA ESQUINA INFERIOR
-                sprintf(buf, "data/%d.png", 13);
-            else
-                sprintf(buf, "data/%d.png", arbolExpansion[filas][columnas]); //EL RESTO ESCRIBE LO QUE TIENE EL ARBOL DE EXPANSION
+                sprintf(buf, "data/entrada.png");
+            if (columnas == (g_columnas-1) && filas == (g_filas-1)) //SACA ESQUINA INFERIOR
+                sprintf(buf, "data/salida.png");
             celda = cairo_image_surface_create_from_png(buf);
             cairo_set_source_surface(cr, celda, x, y);
             cairo_paint(cr);
@@ -196,10 +219,10 @@ void on_btnGenerar_clicked(){
 										  "_Cancelar", GTK_RESPONSE_REJECT, NULL);
 	caja = GTK_WIDGET(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	
-	lblFil = gtk_label_new("Columnas: ");
-	lblCol = gtk_label_new("Filas: ");
-	spinFil = gtk_spin_button_new_with_range (1	, 2048, 1);
-	spinCol = gtk_spin_button_new_with_range (1, 2048, 1);
+	lblCol = gtk_label_new("Columnas: ");
+	lblFil = gtk_label_new("Filas: ");
+	spinCol = gtk_spin_button_new_with_range (2	, 2048, 1);
+	spinFil = gtk_spin_button_new_with_range (2, 2048, 1);
 	
 	gtk_container_add(GTK_CONTAINER(caja), lblFil);
 	gtk_container_add(GTK_CONTAINER(caja), spinFil);
@@ -209,14 +232,20 @@ void on_btnGenerar_clicked(){
 	
 	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (respuesta == GTK_RESPONSE_ACCEPT) {
+		gtk_widget_add_events(g_winPrincipal, GDK_SCROLL_MASK);
+		g_signal_connect(g_winPrincipal, "scroll-event", G_CALLBACK(mouse_scroll), NULL);
+		
 		gtk_widget_set_sensitive (btnResolver, TRUE);
 		gtk_widget_set_sensitive (btnGrabar, TRUE);
-		g_columnas = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
-		g_filas  = gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
+		
+		g_zoomX = g_zoomY = 0;
+		
+		g_columnas 	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
+		g_filas  	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
 		
 		g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
-		
 		generarLaberinto();
+		
 	}
 
 	gtk_widget_destroy (dialog);
@@ -250,6 +279,7 @@ void on_btnLeer_clicked(){
 													"_Abrir"   , GTK_RESPONSE_ACCEPT, NULL);
 	int respuesta = gtk_dialog_run(GTK_DIALOG (dialog));
 	if (respuesta == GTK_RESPONSE_ACCEPT){
+		
 		GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
 		char *filename = gtk_file_chooser_get_filename (chooser);
 		leer(filename);
@@ -307,31 +337,6 @@ void on_winPrincipal_destroy (){
 	gtk_main_quit();
 }
 
-
-///---------------------------------------------------------------------
-/// Zoom in
-void on_btnZoomIn_clicked(){
-	printf("ZoomIn\n");
-	if(g_zoomX < g_columnas-1)
-		g_zoomX += 1;
-	if(g_zoomY < g_filas-1)
-		g_zoomY += 1;
-	gtk_widget_queue_draw (g_areaPintado);
-}
-
-
-///---------------------------------------------------------------------
-/// Zoom out
-void on_btnZoomOut_clicked(){
-	printf("ZoomOut\n");
-	if(g_zoomX > 0)
-		g_zoomX -= 1;
-	if(g_zoomY > 0)
-		g_zoomY -= 1;
-	gtk_widget_queue_draw (g_areaPintado);
-}
-
-
 ///---------------------------------------------------------------------
 /// Interfaz
 void crearInterfaz(){
@@ -341,11 +346,11 @@ void crearInterfaz(){
 	
 	g_winPrincipal 	= GTK_WIDGET(gtk_builder_get_object(builder, "winPrincipal"));
 	g_areaPintado 	= GTK_WIDGET(gtk_builder_get_object(builder, "areaPintado"));
-	btnResolver = GTK_WIDGET(gtk_builder_get_object(builder, "btnResolver"));
-	btnGrabar = GTK_WIDGET(gtk_builder_get_object(builder, "btnGrabar"));
+	btnResolver 	= GTK_WIDGET(gtk_builder_get_object(builder, "btnResolver"));
+	btnGrabar 		= GTK_WIDGET(gtk_builder_get_object(builder, "btnGrabar"));
 	
-	gtk_widget_set_sensitive (btnResolver, FALSE);
 	gtk_widget_set_sensitive (btnGrabar, FALSE);
+	gtk_widget_set_sensitive (btnResolver, FALSE);
 	
 	gtk_window_set_position(GTK_WINDOW(g_winPrincipal), GTK_WIN_POS_CENTER);
 	gtk_window_resize(GTK_WINDOW(g_winPrincipal), WIDTH, HEIGHT);
@@ -355,8 +360,7 @@ void crearInterfaz(){
     gtk_main();   
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
 	srand(time(NULL));
 	gtk_init(&argc, &argv);
 	crearInterfaz();
