@@ -14,9 +14,13 @@ GtkWidget 	*g_areaPintado;
 GtkWidget	*btnResolver;
 GtkWidget	*btnGrabar;
 
+gboolean activadoMC = 1;
+gboolean activadoMS = 0;
+
 int n = -1, contador = -1, c = 0; //TAMAÑO PARA ARCHIVO DE GUARDAR Y LEER
 int g_filas, g_columnas;
 int	g_zoomX = 0, g_zoomY = 0;
+int g_movX = 0, g_movY = 0;
 
 char **laberinto, **arbolExpansion;
 char *filaFrontera, *columnaFrontera;
@@ -24,19 +28,72 @@ char *filaFrontera, *columnaFrontera;
 ///---------------------------------------------------------------------
 /// Zoom in/out
 void mouse_scroll(GtkWidget *widget, GdkEventScroll *event, gpointer user_data){
-	if(event->direction == GDK_SCROLL_UP){			//ZOOM IN
-		if(g_zoomX < g_columnas-1)
-			g_zoomX += 1;
-		if(g_zoomY < g_filas-1)
-			g_zoomY += 1;
+	GdkScrollDirection dir = event->direction;
+	if(activadoMS){
+		if(dir == GDK_SCROLL_UP){			//ZOOM IN
+			if(g_zoomX < g_columnas-1){
+				g_zoomX += 1;
+				g_movX = 0, g_movY = 0;
+			}
+			if(g_zoomY < g_filas-1){
+				g_zoomY += 1;
+				g_movX = 0, g_movY = 0;
+			}
+		}
+		else if(dir == GDK_SCROLL_DOWN){	//ZOOM OUT
+			if(g_zoomX > 0){
+				g_zoomX -= 1;
+				g_movX = 0, g_movY = 0;
+			}
+			if(g_zoomY > 0){
+				g_zoomY -= 1;
+				g_movX = 0, g_movY = 0;
+			}
+		}
+		gtk_widget_queue_draw (g_areaPintado);
+		activadoMS = 0;
 	}
-	else if(event->direction == GDK_SCROLL_DOWN){	//ZOOM OUT
-		if(g_zoomX > 0)
-			g_zoomX -= 1;
-		if(g_zoomY > 0)
-			g_zoomY -= 1;
+	else activadoMS = 1;
+}
+
+
+///---------------------------------------------------------------------
+/// Moverse en matriz
+void mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer user_data){
+	/*double centroX 		= gtk_widget_get_allocated_width(g_areaPintado)/2;
+	double centroY 		= gtk_widget_get_allocated_height(g_areaPintado)/2;
+	double clickX 		= event->x;
+	double clickY		= event->y;
+	
+	int cantX 			= g_columnas-g_zoomX;
+	int cantY 			= g_filas-g_zoomY; 
+	
+	if(activadoMC){
+		printf("CantX: %d\tCantY: %d\n", g_movX, g_movY);
+		if(event->button == GDK_BUTTON_PRIMARY){	//Moverse en columnas
+			if(clickX <= centroX){
+				printf("Izquierda\n");
+				if(g_movX > 0)	g_movX--;
+			}
+			else{
+				printf("Derecha\n");
+				if(g_movX < g_columnas-cantX)	g_movX++;
+			}
+		}
+		else if (event->button == GDK_BUTTON_SECONDARY){	//Moverse en filas
+			if(clickY <= centroY){
+				printf("Arriba\n");
+				if(g_movY > 0)	g_movY--;
+			}
+			else{
+				printf("Abajo\n");
+				if(g_movY < g_filas-cantY) g_movY++;
+			}
+		}
+		gtk_widget_queue_draw (g_areaPintado);
+		activadoMC = 0;
 	}
-	gtk_widget_queue_draw (g_areaPintado);
+	else activadoMC = 1;*/
 }
 
 
@@ -163,7 +220,7 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	float w, t, p, q;
 	float x_scaling, y_scaling;
 	float tex_width, tex_height;
-	int filas = 0, columnas = 0;
+	int filas = 0 + g_movY, columnas = 0 + g_movY;
 	
 	GdkRectangle da;
 	GdkWindow *window;
@@ -179,7 +236,7 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	p = (float)16*(g_columnas-g_zoomX);			//Inicio de x
 	q = (float)16*(g_filas-g_zoomY);			//Inicio de y
 	
-	w = (float)da.width/(g_columnas-g_zoomX);		//Ancho de cada cuadrito
+	w = (float)da.width/(g_columnas-g_zoomX);	//Ancho de cada cuadrito
 	t = (float)da.height/(g_filas-g_zoomY);		//Largo de cada cuadrito
 	x_scaling = w / tex_width;
 	y_scaling = t / tex_height;
@@ -196,16 +253,16 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
             cairo_set_source_surface(cr, celda, x, y);
             cairo_paint(cr);
             
-			if ((columnas == 0 && filas == 0)) 				//SACA ESQUINA SUPERIOR
+			if ((columnas - g_movY) == 0 && (filas - g_movX)== 0) 				//SACA ESQUINA SUPERIOR
                 sprintf(buf, "data/entrada.png");
-            if (columnas == (g_columnas-1) && filas == (g_filas-1)) //SACA ESQUINA INFERIOR
+            if (columnas - g_movY == (g_columnas-1) && filas - g_movX == (g_filas-1)) //SACA ESQUINA INFERIOR
                 sprintf(buf, "data/salida.png");
             celda = cairo_image_surface_create_from_png(buf);
             cairo_set_source_surface(cr, celda, x, y);
             cairo_paint(cr);
             filas++;
 		}
-		filas = 0;
+		filas = 0 + g_movY;
 		columnas++;
 	}
 }
@@ -233,7 +290,9 @@ void on_btnGenerar_clicked(){
 	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (respuesta == GTK_RESPONSE_ACCEPT) {
 		gtk_widget_add_events(g_winPrincipal, GDK_SCROLL_MASK);
+		gtk_widget_add_events(g_winPrincipal, GDK_BUTTON_PRESS_MASK);
 		g_signal_connect(g_winPrincipal, "scroll-event", G_CALLBACK(mouse_scroll), NULL);
+		g_signal_connect(g_winPrincipal, "button-press-event", G_CALLBACK(mouse_click), NULL);
 		
 		gtk_widget_set_sensitive (btnResolver, TRUE);
 		gtk_widget_set_sensitive (btnGrabar, TRUE);
