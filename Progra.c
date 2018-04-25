@@ -22,8 +22,8 @@ int g_filas, g_columnas;
 int	g_zoomX = 0, g_zoomY = 0;
 int g_movX = 0, g_movY = 0;
 
-char **laberinto, **arbolExpansion;
-char *filaFrontera, *columnaFrontera;
+int **laberinto, **arbolExpansion;
+int *filaFrontera, *columnaFrontera;
 
 ///---------------------------------------------------------------------
 /// Zoom in/out
@@ -176,14 +176,14 @@ void asignarConexion(){
 void generarLaberinto(){
 	int i, j, randomR, randomC;
     
-    columnaFrontera	= (char *)malloc(g_filas*g_columnas*sizeof(char));
-	filaFrontera	= (char *)malloc(g_filas*g_columnas*sizeof(char));
-	arbolExpansion	= (char **)malloc(g_filas*sizeof(char *));
-	laberinto	 	= (char **)malloc(g_filas*sizeof(char *));
+    columnaFrontera	= (int *)malloc(g_filas*g_columnas*sizeof(int));
+	filaFrontera	= (int *)malloc(g_filas*g_columnas*sizeof(int));
+	arbolExpansion	= (int **)malloc(g_filas*sizeof(int *));
+	laberinto	 	= (int **)malloc(g_filas*sizeof(int *));
 	
 	for (i = 0; i < g_filas; i++){
-		laberinto[i]		= (char *)malloc(g_columnas*sizeof(char));
-		arbolExpansion[i]	= (char *)malloc(g_columnas*sizeof(char));
+		laberinto[i]		= (int *)malloc(g_columnas*sizeof(int));
+		arbolExpansion[i]	= (int *)malloc(g_columnas*sizeof(int));
 	}
   	
   	for (i = 0; i < g_filas; i++)
@@ -314,24 +314,18 @@ void on_btnGenerar_clicked(){
 /// Botón leer
 void leer (char nombre[1024]) {
 	int i = 0, j = 0;
-    char linea[1024];
+    char linea[1024], *pch;
     FILE *archivo = fopen(nombre, "r");
     
-<<<<<<< Updated upstream
-=======
-    fgets(linea, 1024, archivo);
+	fgets(linea, 1024, archivo);
 	pch = strtok (linea,"x"); g_filas = atoi(pch);
 	pch = strtok (linea, ""); g_columnas = atoi(pch);
 
 	gtk_widget_set_sensitive (btnResolver, TRUE);
 	gtk_widget_set_sensitive (btnGrabar, TRUE);
     g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
-<<<<<<< Updated upstream
-    setear_variables();
-=======
->>>>>>> Stashed changes
-    
->>>>>>> Stashed changes
+	generarLaberinto();
+
     while(fgets(linea, 1024, archivo)) {
         char * pch = strtok (linea," ,");
         while (pch != NULL){
