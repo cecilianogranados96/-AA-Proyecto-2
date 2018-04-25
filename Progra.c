@@ -317,6 +317,21 @@ void leer (char nombre[1024]) {
     char linea[1024];
     FILE *archivo = fopen(nombre, "r");
     
+<<<<<<< Updated upstream
+=======
+    fgets(linea, 1024, archivo);
+	pch = strtok (linea,"x"); g_filas = atoi(pch);
+	pch = strtok (linea, ""); g_columnas = atoi(pch);
+
+	gtk_widget_set_sensitive (btnResolver, TRUE);
+	gtk_widget_set_sensitive (btnGrabar, TRUE);
+    g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
+<<<<<<< Updated upstream
+    setear_variables();
+=======
+>>>>>>> Stashed changes
+    
+>>>>>>> Stashed changes
     while(fgets(linea, 1024, archivo)) {
         char * pch = strtok (linea," ,");
         while (pch != NULL){
