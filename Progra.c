@@ -66,24 +66,24 @@ void mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer user_data){
 	double clickY		= event->y;
 	
 	if(activadoMC){
-		printf("g_movX: %d\tg_movy: %d\n", g_movX, g_movY);
+		//printf("g_movX: %d\tg_movy: %d\n", g_movX, g_movY);
 		if(event->button == GDK_BUTTON_PRIMARY){			//Moverse en columnas
 			if(clickX <= centroX){
-				printf("Izquierda\n");
+				//printf("Izquierda\n");
 				if(g_movX > 0)	g_movX--;
 			}
 			else{
-				printf("Derecha\n");
+				//printf("Derecha\n");
 				if(g_movX < g_columnas-(g_columnas-g_zoomX))	g_movX++;
 			}
 		}
 		else if (event->button == GDK_BUTTON_SECONDARY){	//Moverse en filas
 			if(clickY <= centroY){
-				printf("Arriba\n");
+				//printf("Arriba\n");
 				if(g_movY > 0)	g_movY--;
 			}
 			else{
-				printf("Abajo\n");
+				//printf("Abajo\n");
 				if(g_movY < g_filas-(g_filas-g_zoomY)) g_movY++;
 			}
 		}
@@ -217,9 +217,7 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	float w, t, p, q;
 	float x_scaling, y_scaling;
 	float tex_width, tex_height;
-	printf("g_movX: %d\tc_movY: %d\n", g_movX, g_movY);
 	int filas = g_movY, columnas = g_movX;
-	printf("filas: %d\tcolumnas: %d\n", filas, columnas);
 	GdkRectangle da;
 	GdkWindow *window;
 	cairo_surface_t *celda;
@@ -321,6 +319,7 @@ void leer (char nombre[1024]) {
 	pch = strtok (linea,"x"); g_filas = atoi(pch);
 	pch = strtok (linea, ""); g_columnas = atoi(pch);
 
+	printf("entra\n");
 	gtk_widget_set_sensitive (btnResolver, TRUE);
 	gtk_widget_set_sensitive (btnGrabar, TRUE);
     g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
@@ -360,6 +359,8 @@ void on_btnLeer_clicked(){
 void guardar (char nombre[1024]) {
 	FILE* fichero;
 	fichero = fopen(nombre, "w+");
+	fprintf(fichero, "%dx%d\n", g_filas, g_columnas);
+	
     for(int i = 0; i < g_filas; i++) {
         for(int j = 0; j < g_columnas; j++) {
             fprintf(fichero, "%d,", arbolExpansion[i][j]);       
