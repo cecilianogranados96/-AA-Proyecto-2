@@ -238,30 +238,37 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	y_scaling = t / tex_height;
 	cairo_scale (cr, x_scaling, y_scaling);
 	
-	cairo_set_source_rgba(cr, 0, 0, 0, 0);
-	cairo_set_line_width(cr, 0);
+	cairo_set_source_rgb(cr, 0, 0, 0);
+	cairo_set_line_width(cr, 1);
     
     char buf[2048];
-	for(int x = -p; x < p; x += 32){						//Las imagenes son de 32x32
-		for(int y = -q; y < q; y += 32){
-			sprintf(buf, "data/%d.png", arbolExpansion[filas][columnas]);
-			celda = cairo_image_surface_create_from_png(buf);
-            cairo_set_source_surface(cr, celda, x, y);
-            cairo_paint(cr);
-            
-			if (!columnas && !filas) 				//SACA ESQUINA SUPERIOR
-                sprintf(buf, "data/entrada.png");
-            if (columnas == (g_columnas-1) && filas == (g_filas-1)) //SACA ESQUINA INFERIOR
-                sprintf(buf, "data/salida.png");
-            celda = cairo_image_surface_create_from_png(buf);
-            cairo_set_source_surface(cr, celda, x, y);
-            cairo_paint(cr);
-            filas++;
-		}
-		filas = g_movY;
-		columnas++;
+	
+	if(g_columnas-g_zoomX > 400 && g_filas-g_zoomY > 400){
+		cairo_paint(cr);
 	}
-	printf("\n");
+	
+	else{
+		for(int x = -p; x < p; x += 32){						//Las imagenes son de 32x32
+			for(int y = -q; y < q; y += 32){
+				sprintf(buf, "data/%d.png", arbolExpansion[filas][columnas]);
+				celda = cairo_image_surface_create_from_png(buf);
+				cairo_set_source_surface(cr, celda, x, y);
+				cairo_paint(cr);
+				
+				if (!columnas && !filas) 				//SACA ESQUINA SUPERIOR
+					sprintf(buf, "data/entrada.png");
+				if (columnas == (g_columnas-1) && filas == (g_filas-1)) //SACA ESQUINA INFERIOR
+					sprintf(buf, "data/salida.png");
+				celda = cairo_image_surface_create_from_png(buf);
+				cairo_set_source_surface(cr, celda, x, y);
+				cairo_paint(cr);
+				filas++;
+			}
+			filas = g_movY;
+			columnas++;
+		}
+		printf("\n");
+	}
 }
 
 void on_btnGenerar_clicked(){
