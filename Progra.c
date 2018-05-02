@@ -22,6 +22,8 @@ int g_filas, g_columnas;
 int	g_zoomX = 0, g_zoomY = 0;
 int g_movX = 0, g_movY = 0;
 
+int cantZoom = 11;
+
 int **laberinto, **arbolExpansion;
 int *filaFrontera, *columnaFrontera;
 
@@ -31,22 +33,22 @@ void mouse_scroll(GtkWidget *widget, GdkEventScroll *event, gpointer user_data){
 	GdkScrollDirection dir = event->direction;
 	if(activadoMS){
 		if(dir == GDK_SCROLL_UP){			//ZOOM IN
-			if(g_zoomX < g_columnas-1){
-				g_zoomX += 1;
+			if(g_zoomX < g_columnas-cantZoom){
+				g_zoomX += cantZoom;
 				g_movX = 0, g_movY = 0;
 			}
-			if(g_zoomY < g_filas-1){
-				g_zoomY += 1;
+			if(g_zoomY < g_filas-cantZoom){
+				g_zoomY += cantZoom;
 				g_movX = 0, g_movY = 0;
 			}
 		}
 		else if(dir == GDK_SCROLL_DOWN){	//ZOOM OUT
 			if(g_zoomX > 0){
-				g_zoomX -= 1;
+				g_zoomX -= cantZoom;
 				g_movX = 0, g_movY = 0;
 			}
 			if(g_zoomY > 0){
-				g_zoomY -= 1;
+				g_zoomY -= cantZoom;
 				g_movX = 0, g_movY = 0;
 			}
 		}
