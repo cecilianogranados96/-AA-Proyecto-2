@@ -1,0 +1,4 @@
++ Hacer rutas.
+  - Hacer la primera ruta muy ancha y con cada algoritmo de solución hacer la línea más delgada.
+  - Para las vueltas en U, poner un círculo de la misma manera que con las rutas. Para la primera
+    ruta se hace un círculo más ancho, y para las siguientes se hacen más delgados.

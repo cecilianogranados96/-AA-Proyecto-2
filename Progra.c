@@ -22,7 +22,7 @@ int g_filas, g_columnas;
 int	g_zoomX = 0, g_zoomY = 0;
 int g_movX = 0, g_movY = 0;
 
-int cantZoom = 11;
+int cantZoom = 10;
 
 int **laberinto, **arbolExpansion;
 int *filaFrontera, *columnaFrontera;
@@ -101,7 +101,7 @@ void mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer user_data){
 void agregarAdyacente(int filaIndice,int columnaIndice){
 	if(!laberinto[filaIndice][columnaIndice]){
 		n++;
-		laberinto[filaIndice][columnaIndice] =- 1;
+		laberinto[filaIndice][columnaIndice] -= 1;
 		filaFrontera[n] = filaIndice;
 		columnaFrontera[n] = columnaIndice;
 	}
@@ -207,11 +207,11 @@ void generarLaberinto(){
 
 
 	//ARBOL DE EXPANSION
-	for (i = 0;i < g_filas;i++){
+	/*for (i = 0;i < g_filas;i++){
  		for (j = 0;j < g_columnas;j++)
 			printf("%d\t",arbolExpansion[i][j]);
 		printf("\n");
-    }
+    }*/
 
 }
 
@@ -269,7 +269,7 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 			filas = g_movY;
 			columnas++;
 		}
-		printf("\n");
+		//printf("\n");
 	}
 }
 
@@ -304,6 +304,7 @@ void on_btnGenerar_clicked(){
 		gtk_widget_set_sensitive (btnGrabar, TRUE);
 		
 		g_zoomX = g_zoomY = 0;
+		g_movX = g_movY = 0;
 		
 		g_columnas 	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
 		g_filas  	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
@@ -328,7 +329,7 @@ void leer (char nombre[1024]) {
 	pch = strtok (linea,"x"); g_filas = atoi(pch);
 	pch = strtok (linea, ""); g_columnas = atoi(pch);
 
-	printf("entra\n");
+	//printf("entra\n");
 	gtk_widget_set_sensitive (btnResolver, TRUE);
 	gtk_widget_set_sensitive (btnGrabar, TRUE);
     g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
@@ -377,7 +378,7 @@ void guardar (char nombre[1024]) {
         fprintf(fichero, "\n");
 	}
 	fclose(fichero);
-	printf("\nProceso completado");
+	//printf("\nProceso completado");
 }
 
 void on_btnGrabar_clicked(){
