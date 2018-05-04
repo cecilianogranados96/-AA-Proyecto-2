@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 int g_columnas 	= 5;
 int g_filas 	= 5;
@@ -12,6 +13,11 @@ int laberinto [5][5] = {{7,4,3,4,2},
 int i, j;
 //int **laberinto;
 int **laberintoBin;
+
+int row_size = 5*3;
+int col_size = 5*3;
+
+
 
 int inicializarMatrices(){
 	//laberinto		= (int **)malloc(g_filas*sizeof(int *));
@@ -114,12 +120,47 @@ int conversion_aux(int k, int l){
 }
 
 
+
 int conversion(){
 	for (i = 0; i < g_filas; i++)
  		for (j = 0; j < g_columnas; j++)
 			conversion_aux(i, j);
 	return 1;
 }
+
+
+
+
+
+
+bool solve(int row, int col) {
+
+  if(laberintoBin[row][col] == 0 || laberintoBin[row][col] == 8){
+    return false;
+  }
+  if(row == (row_size-2) && col == (col_size-1)){
+    return true;
+  }
+  laberintoBin[row][col] = 8;
+  if (solve(row-1, col))
+    return true;
+
+  if (solve(row, col+1))
+    return true;
+
+  if (solve(row+1, col))
+    return true;
+
+  if (solve(row, col-1))
+    return true;
+
+  laberintoBin[row][col] = 1;
+  
+  return false;
+}
+
+
+
 
 int main(int argc, char **argv)
 {
@@ -144,6 +185,25 @@ int main(int argc, char **argv)
 		printf("\n");
     }
 	
+    
+    
+  solve(1, 0);
+
+  for(int i = 0; i < row_size; i++){
+    for(int j = 0; j < col_size; j++)
+        if (laberintoBin[i][j] == 8){
+            printf("X");
+        }else{
+            printf("%i",laberintoBin[i][j]);
+        }
+    printf("\n");
+  }
+    
+    
+    
+    
+    
+    
 	return 0;
 }
 
