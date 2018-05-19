@@ -1,9 +1,8 @@
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 #include <time.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <gtk/gtk.h>
 
 #define WIDTH   640
@@ -178,8 +177,8 @@ void asignarConexion(){
 
 void generarLaberinto(){
 	int i, j, randomR, randomC;
-    
-    columnaFrontera	= (int *)malloc(g_filas*g_columnas*sizeof(int));
+	
+	columnaFrontera	= (int *)malloc(g_filas*g_columnas*sizeof(int));
 	filaFrontera	= (int *)malloc(g_filas*g_columnas*sizeof(int));
 	arbolExpansion	= (int **)malloc(g_filas*sizeof(int *));
 	laberinto	 	= (int **)malloc(g_filas*sizeof(int *));
@@ -188,32 +187,38 @@ void generarLaberinto(){
 		laberinto[i]		= (int *)malloc(g_columnas*sizeof(int));
 		arbolExpansion[i]	= (int *)malloc(g_columnas*sizeof(int));
 	}
-  	
-  	for (i = 0; i < g_filas; i++)
-      	for (j = 0; j < g_columnas; j++){
+		
+	for (i = 0; i < g_filas; i++)
+		for (j = 0; j < g_columnas; j++){
 			laberinto[i][j]	= 0;
 			arbolExpansion[i][j] = 0;
 		}
 	
-	randomR	= rand()%g_filas;
-	randomC	= rand()%g_columnas;
-	laberinto[randomR][randomC] = 16;
+	if(g_columnas == 1 && g_filas == 1){
+		if(rand()%2)
+			arbolExpansion[0][0] = 5;
+		else
+			arbolExpansion[0][0] = 10;
+	}
 	
-	marcarAdyacente(randomR,randomC);
-	
-	asignarConexion();
-	
-	while(n != -1)
+	else{	
+		randomR	= rand()%g_filas;
+		randomC	= rand()%g_columnas;
+		laberinto[randomR][randomC] = 16;
+		
+		marcarAdyacente(randomR,randomC);
+		
 		asignarConexion();
-
-
-	//ARBOL DE EXPANSION
-	/*for (i = 0;i < g_filas;i++){
+		
+		while(n != -1)
+			asignarConexion();
+	}
+	/*ARBOL DE EXPANSION
+	for (i = 0;i < g_filas;i++){
  		for (j = 0;j < g_columnas;j++)
 			printf("%d\t",arbolExpansion[i][j]);
 		printf("\n");
     }*/
-
 }
 
 void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
@@ -231,25 +236,31 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	tex_height 	= cairo_image_surface_get_height(celda);
 	gdk_window_get_geometry(window, &da.x, &da.y, &da.width, &da.height);	// Determinamos el tamaño de la drawing area y la ponemos en el 
 	cairo_translate (cr, da.width / 2, da.height / 2);						// centro del widget.
-	
+		
 	p = (float)16*(g_columnas-g_zoomX);			//Inicio de x
 	q = (float)16*(g_filas-g_zoomY);			//Inicio de y
-	
+		
 	w = (float)da.width/(g_columnas-g_zoomX);	//Ancho de cada cuadrito
 	t = (float)da.height/(g_filas-g_zoomY);		//Largo de cada cuadrito
 	x_scaling = w / tex_width;
 	y_scaling = t / tex_height;
 	cairo_scale (cr, x_scaling, y_scaling);
-	
+		
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	cairo_set_line_width(cr, 1);
-    
-    char buf[2048];
+		
+	char buf[2048];
 	
-	if(g_columnas-g_zoomX > 400 && g_filas-g_zoomY > 400){
+	if(g_columnas == 1 && g_filas == 1){
+		sprintf(buf, "data/%d.png", arbolExpansion[filas][columnas]);
+		celda = cairo_image_surface_create_from_png(buf);
+		cairo_set_source_surface(cr, celda, -p, -q);
 		cairo_paint(cr);
 	}
 	
+	else if(g_columnas-g_zoomX > 400 && g_filas-g_zoomY > 400)
+		cairo_paint(cr);
+		
 	else{
 		for(int x = -p; x < p; x += 32){						//Las imagenes son de 32x32
 			for(int y = -q; y < q; y += 32){
@@ -257,14 +268,18 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 				celda = cairo_image_surface_create_from_png(buf);
 				cairo_set_source_surface(cr, celda, x, y);
 				cairo_paint(cr);
-				
-				if (!columnas && !filas) 				//SACA ESQUINA SUPERIOR
+				if (!columnas && !filas){ 			//SACA ESQUINA SUPERIOR
 					sprintf(buf, "data/entrada.png");
-				if (columnas == (g_columnas-1) && filas == (g_filas-1)) //SACA ESQUINA INFERIOR
+					celda = cairo_image_surface_create_from_png(buf);
+					cairo_set_source_surface(cr, celda, x, y);
+					cairo_paint(cr);
+				}
+				if (columnas == (g_columnas-1) && filas == (g_filas-1)){ //SACA ESQUINA INFERIOR
 					sprintf(buf, "data/salida.png");
-				celda = cairo_image_surface_create_from_png(buf);
-				cairo_set_source_surface(cr, celda, x, y);
-				cairo_paint(cr);
+					celda = cairo_image_surface_create_from_png(buf);
+					cairo_set_source_surface(cr, celda, x, y);
+					cairo_paint(cr);
+				}
 				filas++;
 			}
 			filas = g_movY;
@@ -274,6 +289,137 @@ void on_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	}
 }
 
+void on_btnGenerar_clicked(){
+	GtkWidget *lblCol, *lblFil, *spinCol, *spinFil, *caja, *dialog;
+	
+	dialog = gtk_dialog_new_with_buttons ("Elegir tamaño de la matriz", GTK_WINDOW(g_winPrincipal) , 
+										  GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, 
+										  "_Aceptar" , GTK_RESPONSE_ACCEPT, 
+										  "_Cancelar", GTK_RESPONSE_REJECT, NULL);
+	caja = GTK_WIDGET(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
+	
+	lblCol = gtk_label_new("Columnas: ");
+	lblFil = gtk_label_new("Filas: ");
+	spinCol = gtk_spin_button_new_with_range (1	, 2048, 1);
+	spinFil = gtk_spin_button_new_with_range (1, 2048, 1);
+	
+	gtk_container_add(GTK_CONTAINER(caja), lblFil);
+	gtk_container_add(GTK_CONTAINER(caja), spinFil);
+	gtk_container_add(GTK_CONTAINER(caja), lblCol);
+	gtk_container_add(GTK_CONTAINER(caja), spinCol);
+	gtk_widget_show_all(dialog);
+	
+	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
+	if (respuesta == GTK_RESPONSE_ACCEPT) {
+		gtk_widget_add_events(g_winPrincipal, GDK_SCROLL_MASK);
+		gtk_widget_add_events(g_winPrincipal, GDK_BUTTON_PRESS_MASK);
+		g_signal_connect(g_winPrincipal, "scroll-event", G_CALLBACK(mouse_scroll), NULL);
+		g_signal_connect(g_winPrincipal, "button-press-event", G_CALLBACK(mouse_click), NULL);
+		
+		gtk_widget_set_sensitive (btnResolver, TRUE);
+		gtk_widget_set_sensitive (btnGrabar, TRUE);
+		
+		g_zoomX = g_zoomY = 0;
+		g_movX = g_movY = 0;
+		
+		g_columnas 	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
+		g_filas  	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
+		
+		g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
+		generarLaberinto();
+		
+	}
+
+	gtk_widget_destroy (dialog);
+}
+
+///---------------------------------------------------------------------
+/// Botón leer
+void leer (char nombre[1024]) {
+	int i = 0, j = 0;
+    char linea[1024];
+    FILE *archivo = fopen(nombre, "r");
+    
+	fgets(linea, 1024, archivo);
+    g_filas = atoi(linea);
+    
+    
+    fgets(linea, 1024, archivo);	
+    g_columnas = atoi(linea);
+
+    
+	//printf("entra\n");
+	gtk_widget_set_sensitive (btnResolver, TRUE);
+	gtk_widget_set_sensitive (btnGrabar, TRUE);
+    g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
+	generarLaberinto();
+
+    while(fgets(linea, 1024, archivo)) {
+        char * pch = strtok (linea," ,");
+        while (pch != NULL){
+            arbolExpansion[i][j] =  atoi(pch);
+            pch = strtok (NULL, " ,"); 
+            j++;
+        } i++; j = 0;
+    }
+    fclose(archivo);
+    
+    gtk_widget_queue_draw (g_areaPintado);
+}
+
+void on_btnLeer_clicked(){
+	GtkWidget *dialog = gtk_file_chooser_dialog_new("Leer Archivo", GTK_WINDOW(g_winPrincipal), 
+													GTK_FILE_CHOOSER_ACTION_OPEN, 
+													"_Cancelar", GTK_RESPONSE_CANCEL, 
+													"_Abrir"   , GTK_RESPONSE_ACCEPT, NULL);
+	int respuesta = gtk_dialog_run(GTK_DIALOG (dialog));
+	if (respuesta == GTK_RESPONSE_ACCEPT){
+		
+		GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
+		char *filename = gtk_file_chooser_get_filename (chooser);
+		leer(filename);
+	}
+	gtk_widget_destroy (dialog);
+}
+
+
+///---------------------------------------------------------------------
+/// Botón Guardar
+void guardar (char nombre[1024]) {
+	FILE* fichero;
+	fichero = fopen(nombre, "w+");
+	fprintf(fichero, "%d\n", g_filas);
+    fprintf(fichero, "%d\n", g_columnas);
+    
+	
+    for(int i = 0; i < g_filas; i++) {
+        for(int j = 0; j < g_columnas; j++) {
+            fprintf(fichero, "%d,", arbolExpansion[i][j]);       
+        }
+        fprintf(fichero, "\n");
+	}
+	fclose(fichero);
+	//printf("\nProceso completado");
+}
+
+void on_btnGrabar_clicked(){
+	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Grabar Archivo", GTK_WINDOW(g_winPrincipal), 
+													 GTK_FILE_CHOOSER_ACTION_SAVE, 
+													 "_Cancelar", GTK_RESPONSE_CANCEL, 
+													 "_Grabar"  , GTK_RESPONSE_ACCEPT, NULL);
+	GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
+	gtk_file_chooser_set_do_overwrite_confirmation (chooser, TRUE);
+	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
+	if (respuesta == GTK_RESPONSE_ACCEPT) {
+		char *filename = gtk_file_chooser_get_filename (chooser);
+		guardar(filename);
+	}
+	gtk_widget_destroy (dialog);
+}
+
+
+///---------------------------------------------------------------------
+/// Botón Resolver
 
 int conversion_aux(int k, int l){
 	switch(laberinto[k][l]){
@@ -363,139 +509,6 @@ int conversion(){
 	return 1;
 }
 
-
-void on_btnGenerar_clicked(){
-	GtkWidget *lblCol, *lblFil, *spinCol, *spinFil, *caja, *dialog;
-	
-	dialog = gtk_dialog_new_with_buttons ("Elegir tamaño de la matriz", GTK_WINDOW(g_winPrincipal) , 
-										  GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT, 
-										  "_Aceptar" , GTK_RESPONSE_ACCEPT, 
-										  "_Cancelar", GTK_RESPONSE_REJECT, NULL);
-	caja = GTK_WIDGET(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	
-	lblCol = gtk_label_new("Columnas: ");
-	lblFil = gtk_label_new("Filas: ");
-	spinCol = gtk_spin_button_new_with_range (2	, 2048, 1);
-	spinFil = gtk_spin_button_new_with_range (2, 2048, 1);
-	
-	gtk_container_add(GTK_CONTAINER(caja), lblFil);
-	gtk_container_add(GTK_CONTAINER(caja), spinFil);
-	gtk_container_add(GTK_CONTAINER(caja), lblCol);
-	gtk_container_add(GTK_CONTAINER(caja), spinCol);
-	gtk_widget_show_all(dialog);
-	
-	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
-	if (respuesta == GTK_RESPONSE_ACCEPT) {
-		gtk_widget_add_events(g_winPrincipal, GDK_SCROLL_MASK);
-		gtk_widget_add_events(g_winPrincipal, GDK_BUTTON_PRESS_MASK);
-		g_signal_connect(g_winPrincipal, "scroll-event", G_CALLBACK(mouse_scroll), NULL);
-		g_signal_connect(g_winPrincipal, "button-press-event", G_CALLBACK(mouse_click), NULL);
-		
-		gtk_widget_set_sensitive (btnResolver, TRUE);
-		gtk_widget_set_sensitive (btnGrabar, TRUE);
-		
-		g_zoomX = g_zoomY = 0;
-		g_movX = g_movY = 0;
-		
-		g_columnas 	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinCol));
-		g_filas  	= gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinFil));
-		
-		g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
-		generarLaberinto();
-		
-	}
-
-	gtk_widget_destroy (dialog);
-}
-
-
-///---------------------------------------------------------------------
-/// Botón leer
-void leer (char nombre[1024]) {
-	int i = 0, j = 0;
-    char linea[1024];
-    FILE *archivo = fopen(nombre, "r");
-    
-	fgets(linea, 1024, archivo);
-    g_filas = atoi(linea);
-    
-    
-    fgets(linea, 1024, archivo);	
-    g_columnas = atoi(linea);
-
-    
-	//printf("entra\n");
-	gtk_widget_set_sensitive (btnResolver, TRUE);
-	gtk_widget_set_sensitive (btnGrabar, TRUE);
-    g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw), NULL);
-	generarLaberinto();
-
-    while(fgets(linea, 1024, archivo)) {
-        char * pch = strtok (linea," ,");
-        while (pch != NULL){
-            arbolExpansion[i][j] =  atoi(pch);
-            pch = strtok (NULL, " ,"); 
-            j++;
-        } i++; j = 0;
-    }
-    fclose(archivo);
-    
-    gtk_widget_queue_draw (g_areaPintado);
-}
-
-void on_btnLeer_clicked(){
-	GtkWidget *dialog = gtk_file_chooser_dialog_new("Leer Archivo", GTK_WINDOW(g_winPrincipal), 
-													GTK_FILE_CHOOSER_ACTION_OPEN, 
-													"_Cancelar", GTK_RESPONSE_CANCEL, 
-													"_Abrir"   , GTK_RESPONSE_ACCEPT, NULL);
-	int respuesta = gtk_dialog_run(GTK_DIALOG (dialog));
-	if (respuesta == GTK_RESPONSE_ACCEPT){
-		
-		GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-		char *filename = gtk_file_chooser_get_filename (chooser);
-		leer(filename);
-	}
-	gtk_widget_destroy (dialog);
-}
-
-
-///---------------------------------------------------------------------
-/// Botón Guardar
-void guardar (char nombre[1024]) {
-	FILE* fichero;
-	fichero = fopen(nombre, "w+");
-	fprintf(fichero, "%d\n", g_filas);
-    fprintf(fichero, "%d\n", g_columnas);
-    
-	
-    for(int i = 0; i < g_filas; i++) {
-        for(int j = 0; j < g_columnas; j++) {
-            fprintf(fichero, "%d,", arbolExpansion[i][j]);       
-        }
-        fprintf(fichero, "\n");
-	}
-	fclose(fichero);
-	//printf("\nProceso completado");
-}
-
-void on_btnGrabar_clicked(){
-	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Grabar Archivo", GTK_WINDOW(g_winPrincipal), 
-													 GTK_FILE_CHOOSER_ACTION_SAVE, 
-													 "_Cancelar", GTK_RESPONSE_CANCEL, 
-													 "_Grabar"  , GTK_RESPONSE_ACCEPT, NULL);
-	GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
-	gtk_file_chooser_set_do_overwrite_confirmation (chooser, TRUE);
-	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
-	if (respuesta == GTK_RESPONSE_ACCEPT) {
-		char *filename = gtk_file_chooser_get_filename (chooser);
-		guardar(filename);
-	}
-	gtk_widget_destroy (dialog);
-}
-
-
-///---------------------------------------------------------------------
-/// Botón Resolver
 void on_btnResolver_clicked(){
 	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW(g_winPrincipal), 
 												GTK_DIALOG_DESTROY_WITH_PARENT, 
@@ -503,9 +516,6 @@ void on_btnResolver_clicked(){
 												"No implementado");
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
-    
-
-    
 }
 
 
