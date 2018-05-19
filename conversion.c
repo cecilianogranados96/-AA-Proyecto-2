@@ -11,11 +11,7 @@ int laberinto [5][5] = {{7,4,3,4,2},
 				 {11,15,15,7,14},
 				 {8,8,8,8,9}};
 int i, j;
-//int **laberinto;
 int **laberintoBin;
-
-int row_size = 5*3;
-int col_size = 5*3;
 
 
 
@@ -119,8 +115,6 @@ int conversion_aux(int k, int l){
 	return 1;
 }
 
-
-
 int conversion(){
 	for (i = 0; i < g_filas; i++)
  		for (j = 0; j < g_columnas; j++)
@@ -131,27 +125,25 @@ int conversion(){
 
 
 
-
-
-bool solve(int row, int col) {
+bool tremaux(int row, int col) {
 
   if(laberintoBin[row][col] == 0 || laberintoBin[row][col] == 8){
     return false;
   }
-  if(row == (row_size-2) && col == (col_size-1)){
+  if(row == ((g_filas*3)-2) && col == ((g_columnas*3)-1)){
     return true;
   }
   laberintoBin[row][col] = 8;
-  if (solve(row-1, col))
+  if (tremaux(row-1, col))
     return true;
 
-  if (solve(row, col+1))
+  if (tremaux(row, col+1))
     return true;
 
-  if (solve(row+1, col))
+  if (tremaux(row+1, col))
     return true;
 
-  if (solve(row, col-1))
+  if (tremaux(row, col-1))
     return true;
 
   laberintoBin[row][col] = 1;
@@ -160,11 +152,48 @@ bool solve(int row, int col) {
 }
 
 
+bool verifica_raton(int x, int y){
+    if(x >= 0 && x < g_columnas && y >= 0 && y < g_filas && laberintoBin[x][y] == 1)
+        return true;
+    return false;
+}
+ 
+
+bool raton(int x, int y){
+
+    if(x == g_columnas-1 && y == g_filas-1)
+    {
+        laberintoBin[x][y] = 1;
+        return true;
+    }
+ 
+    if(verifica_raton(x, y) == true)
+    {
+        laberintoBin[x][y] = 8;
+ 
+        if (raton(x+1, y) == true)
+            return true;
+
+        if (raton(x, y+1) == true)
+            return true;
+
+        laberintoBin[x][y] = 0;
+        return false;
+    }   
+ 
+    return false;
+}
+
+
+
+
 
 
 int main(int argc, char **argv)
 {
 	inicializarMatrices();
+    
+    
 	conversion();
 	
 	for (i = 0; i < g_filas; i++){
@@ -186,20 +215,32 @@ int main(int argc, char **argv)
     }
 	
     
-    
-  solve(1, 0);
-
-  for(int i = 0; i < row_size; i++){
-    for(int j = 0; j < col_size; j++)
-        if (laberintoBin[i][j] == 8){
-            printf("X");
-        }else{
-            printf("%i",laberintoBin[i][j]);
-        }
     printf("\n");
-  }
+    printf("\n");
     
     
+    
+    //OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO 
+    
+    
+    //tremaux(1, 0);
+    
+    raton(0, 0);
+    
+    
+    
+
+
+	for (i = 0; i < g_filas*3; i++){
+		if(i%3 == 0 && i > 1)
+			printf("------|-------|-------|-------|------\n");
+ 		for (j = 0; j < g_columnas*3; j++){
+			if(j%3 == 0 && j > 1)
+				printf("| ");
+			printf("%d ", laberintoBin[i][j]);
+		}
+		printf("\n");
+    }
     
     
     
