@@ -13,23 +13,20 @@ int laberinto [5][5] = {{7,4,3,4,2},
 int i, j;
 int **laberintoBin;
 
-
+int ruta[100][2];
+int pos_ruta;
 
 int inicializarMatrices(){
-	//laberinto		= (int **)malloc(g_filas*sizeof(int *));
 	laberintoBin	= (int **)malloc((g_filas*3)*sizeof(int *));
-	
-	//for (i = 0; i < g_filas; i++)
-		//laberinto[i]	= (int *)malloc(g_columnas*sizeof(int));
+
+	for (i = 0; i < g_filas*3; i++){
+		laberintoBin[i]	= (int *)malloc((g_columnas*3)*sizeof(int));     
+    }
+
 	for (i = 0; i < g_filas*3; i++)
-		laberintoBin[i]	= (int *)malloc((g_columnas*3)*sizeof(int));
-	
-	//for (i = 0; i < g_filas; i++)
-      	//for (j = 0; j < g_columnas; j++)
-			//laberinto[i][j] = 0;
-	for (i = 0; i < g_filas*3; i++)
-      	for (j = 0; j < g_columnas*3; j++)
+      	for (j = 0; j < g_columnas*3; j++){
 			laberintoBin[i][j] = 0;
+        }
 	
 	return 1;
 }
@@ -134,6 +131,13 @@ bool tremaux(int row, int col) {
     return true;
   }
   laberintoBin[row][col] = 8;
+
+  ruta[pos_ruta][0] = row;
+   ruta[pos_ruta][1] =  col;
+    pos_ruta++;
+    
+    
+    
   if (tremaux(row-1, col))
     return true;
 
@@ -152,37 +156,6 @@ bool tremaux(int row, int col) {
 }
 
 
-bool verifica_raton(int x, int y){
-    if(x >= 0 && x < g_columnas && y >= 0 && y < g_filas && laberintoBin[x][y] == 1)
-        return true;
-    return false;
-}
- 
-
-bool raton(int x, int y){
-
-    if(x == g_columnas-1 && y == g_filas-1)
-    {
-        laberintoBin[x][y] = 1;
-        return true;
-    }
- 
-    if(verifica_raton(x, y) == true)
-    {
-        laberintoBin[x][y] = 8;
- 
-        if (raton(x+1, y) == true)
-            return true;
-
-        if (raton(x, y+1) == true)
-            return true;
-
-        laberintoBin[x][y] = 0;
-        return false;
-    }   
- 
-    return false;
-}
 
 
 
@@ -223,14 +196,17 @@ int main(int argc, char **argv)
     //OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO OJO 
     
     
-    //tremaux(1, 0);
+    tremaux(1, 0);
     
-    raton(0, 0);
-    
-    
-    
+  	for (j = 0; j < pos_ruta; j++){
+        for (i = 0; i < 2; i++){
+			printf("%d - ", ruta[i][j]);
+        }
+        printf("\n");
+    }
+   
 
-
+/*
 	for (i = 0; i < g_filas*3; i++){
 		if(i%3 == 0 && i > 1)
 			printf("------|-------|-------|-------|------\n");
@@ -241,8 +217,7 @@ int main(int argc, char **argv)
 		}
 		printf("\n");
     }
-    
-    
+    */
     
     
 	return 0;
