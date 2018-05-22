@@ -14,13 +14,7 @@ int laberinto [5][5] = {
 };
 
 
-int spanningTree [5][5] = {
-                 {7,4,3,4,2},
-				 {10,3,13,4,10},
-				 {10,10,3,4,10},
-				 {11,15,15,7,14},
-				 {8,8,8,8,9}
-};
+
 
 
 
@@ -171,39 +165,61 @@ bool preguntaOeste(int pNum){
 
 
 
-void raton() {
-    int row = 0; 
-    int col = 0;
-  while(row != 4 && col != 4){
-    printf("%d - %d\n",row,col);
-    if (preguntaEste(laberinto[row-1][col])){
-        //printf("ESTE\n");
-        resultadoraton[row][col] = 1;
-        row--;
-    }
-    if (preguntaOeste(laberinto[row][col+1])){
-        //printf("Oeste\n");
-        resultadoraton[row][col] = 1;
-        col++;
-    }
-    if (preguntaSur(laberinto[row+1][col])){
-        //printf("SUR\n");
-        resultadoraton[row][col] = 1;
-        row++;
-    }
-    if (preguntaNorte(laberinto[row][col-1])){
-       // printf("NORTE\n");
-        resultado[row][col] = 1;
-        col--;
-    }
-        
-    //resultado[row][col] = 0;
-    row++;
-    col++;
-      
-  }
-
+int avanzar(int direccion, int direccionAnterior,int i, int j){
+	if((direccionAnterior+=2)%4==direccion){
+		return 0;
+	}else if((direccion==0) && (laberinto[i][j]&1)){
+		return 1;
+	}else if((direccion==1) && ((laberinto[i][j]>>1)&1)){
+		return 1;
+	}else if((direccion==2) && ((laberinto[i][j]>>2)&1)){
+		return 1;
+	}else if((direccion==3) && ((laberinto[i][j]>>3)&1)){
+		return 1;
+	}
+	return 0;
 }
+
+void raton(){
+	int i=0,j=0,k=0,direccion=0,cambioDireccion,direccionRandom;
+	laberinto[0][0]-=4;
+	while((i<g_filas-1) || (j<g_columnas-1)){
+		cambioDireccion=0;
+		if(laberinto[i][j]==1){
+			direccion=0;
+		}else if(laberinto[i][j]==2){
+			direccion=1;
+		}else if(laberinto[i][j]==4){
+			direccion=2;
+		}else if(laberinto[i][j]==8){
+			direccion=3;
+		}else{
+			while(!cambioDireccion){
+				direccionRandom=rand()%4;
+				if(avanzar(direccionRandom,direccion,i,j)){
+					cambioDireccion=1;
+					direccion=direccionRandom;
+				}
+			}
+		}
+		if(direccion==0){
+			j++;
+            resultadoraton[i][j] = 1; //OJO
+		}else if(direccion==1){
+			i++;
+            resultadoraton[i][j] = 1; //OJO
+		}else if(direccion==2){
+			j--;
+            resultadoraton[i][j] = 1; //OJO
+		}else{
+			i--;
+            resultadoraton[i][j] = 1; //OJO
+		}
+		k++;
+	}
+	laberinto[0][0]+=4;
+}
+
 
 
 
@@ -211,70 +227,68 @@ void raton() {
 
 void pledge(){
     int i=0,j=0,counter=0,k=0;
-	spanningTree[0][0]-=4;
+	laberinto[0][0]-=4;
 	while((i<g_filas-1) || (j<g_columnas-1)){
 		if(counter!=0){
 			if(counter%4==1){
-				if(spanningTree[i][j]&1){
+				if(laberinto[i][j]&1){
 					counter--;
 					j++;
-                    printf("%d - %d\n",i,j);
                     resultadopledge[i][j] = 1; 
-				}else if((spanningTree[i][j]>>1)&1){
+				}else if((laberinto[i][j]>>1)&1){
 					i++;
-                    resultadopledge[i][j] = 1; 
+                    resultadopledge[i][j] = 1; //OJO
 				}else{
 					counter++;
 				}
 			}else if(counter%4==0){
-				if((spanningTree[i][j]>>3)&1){
+				if((laberinto[i][j]>>3)&1){
 					counter--;
 					i--;
-                    printf("%d - %d\n",i,j);
                      resultadopledge[i][j] = 1; 
-				}else if(spanningTree[i][j]&1){
+				}else if(laberinto[i][j]&1){
 					j++;
-                    resultadopledge[i][j] = 1; 
+                     resultadopledge[i][j] = 1; //OJO
 				}else{
 					counter++;
 				}
 			}else if(counter%4==3){
-				if((spanningTree[i][j]>>2)&1){
+				if((laberinto[i][j]>>2)&1){
 					counter--;
 					j--;
-                    printf("%d - %d\n",i,j);
-                     resultadopledge[i][j] = 1; 
-				}else if((spanningTree[i][j]>>3)&1){
+                    
+                      resultadopledge[i][j] = 1; //OJO
+				}else if((laberinto[i][j]>>3)&1){
 					i--;
-                    resultadopledge[i][j] = 1; 
+                     resultadopledge[i][j] = 1; //OJO
 				}else{
 					counter++;
 				}
 			}else{
-				if((spanningTree[i][j]>>1)&1){
+				if((laberinto[i][j]>>1)&1){
 					counter--;
 					i++;
-                    printf("%d - %d\n",i,j);
-                     resultadopledge[i][j] = 1; 
-				}else if((spanningTree[i][j]>>2)&1){
+                    
+                    resultadopledge[i][j] = 1; //OJO
+				}else if((laberinto[i][j]>>2)&1){
 					j--;
-                    resultadopledge[i][j] = 1; 
+                     resultadopledge[i][j] = 1; //OJO
 				}else{
 					counter++;
 				}
 			}
 		}else{
-			if(!(spanningTree[i][j]&1)){
+			if(!(laberinto[i][j]&1)){
 				counter++;
-                printf("%d - %d\n",i,j);
-                 resultadopledge[i][j] = 1; 
+                 resultadopledge[i][j] = 1; //OJO
 			}else{
 				j++;
+                 resultadopledge[i][j] = 1; //OJO
 			}
 		}
 		k++;
 	}
-	spanningTree[0][0]+=4;
+	laberinto[0][0]+=4;
 }
 
 
@@ -370,7 +384,7 @@ void resuelveIzquierda(){
 
 	while(!(pXInicio == (g_columnas-1) && pYInicio == (g_filas-1))){ 
 		i++;
-		numPos = spanningTree[pXInicio][pYInicio];
+		numPos = laberinto[pXInicio][pYInicio];
 		//printf("me quede pegado en x: %d y en la Y: %d \n", pXInicio, pYInicio);
 		if(direccion == 3){ //SI estamos caminando hacia el norte
 			//printf("estoy en norte\n");
