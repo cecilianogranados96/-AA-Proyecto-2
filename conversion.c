@@ -13,17 +13,6 @@ int laberinto [5][5] = {
 				 {8,8,8,8,9}
 };
 
-
-int spanningTree [5][5] = {
-                 {7,4,3,4,2},
-				 {10,3,13,4,10},
-				 {10,10,3,4,10},
-				 {11,15,15,7,14},
-				 {8,8,8,8,9}
-};
-
-
-
 int resultado [5][5];
 int resultadoDerecha[5][5];
 int resultadoIzquierda[5][5];
@@ -171,110 +160,140 @@ bool preguntaOeste(int pNum){
 
 
 
-void raton() {
-    int row = 0; 
-    int col = 0;
-  while(row != 4 && col != 4){
-    printf("%d - %d\n",row,col);
-    if (preguntaEste(laberinto[row-1][col])){
-        //printf("ESTE\n");
-        resultadoraton[row][col] = 1;
-        row--;
-    }
-    if (preguntaOeste(laberinto[row][col+1])){
-        //printf("Oeste\n");
-        resultadoraton[row][col] = 1;
-        col++;
-    }
-    if (preguntaSur(laberinto[row+1][col])){
-        //printf("SUR\n");
-        resultadoraton[row][col] = 1;
-        row++;
-    }
-    if (preguntaNorte(laberinto[row][col-1])){
-       // printf("NORTE\n");
-        resultado[row][col] = 1;
-        col--;
-    }
-        
-    //resultado[row][col] = 0;
-    row++;
-    col++;
-      
-  }
+bool avanzar(int direccion, int direccionAnterior,int i, int j){
+	if((direccionAnterior += 2)%4 == direccion)
+		return false;
+	else if((direccion == 0) && (laberinto[i][j]&1))
+		return true;
+	else if((direccion == 1) && ((laberinto[i][j]>>1)&1))
+		return true;
+	else if((direccion == 2) && ((laberinto[i][j]>>2)&1))
+		return true;
+	else if((direccion == 3) && ((laberinto[i][j]>>3)&1))
+		return true;
+	return false;
+}
 
+void raton(){
+	int pXInicio = 0, pYInicio = 0, numPos = 0, direccion = 0;
+	int cambioDireccion, direccionRandom;
+	laberinto[0][0] -= 4;
+	
+	while((pXInicio < g_filas-1) || (pYInicio < g_columnas-1)){
+		cambioDireccion = 0;
+		if(laberinto[pXInicio][pYInicio] == 1)
+			direccion = 0;
+		else if(laberinto[pXInicio][pYInicio] == 2)
+			direccion = 1;
+		else if(laberinto[pXInicio][pYInicio] == 4)
+			direccion = 2;
+		else if(laberinto[pXInicio][pYInicio] == 8)
+			direccion = 3;
+		else
+			while(!cambioDireccion){
+				direccionRandom = rand()%4;
+				if(avanzar(direccionRandom,direccion,pXInicio,pYInicio)){
+					cambioDireccion = 1;
+					direccion = direccionRandom;
+				}
+			}
+		if(direccion==0){
+			pYInicio++;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else if(direccion==1){
+			pXInicio++;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else if(direccion==2){
+			pYInicio--;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else{
+			pXInicio--;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		numPos++;
+	}
+	laberinto[0][0] += 4;
 }
 
 
 
 
 
+
 void pledge(){
-    int i=0,j=0,counter=0,k=0;
-	spanningTree[0][0]-=4;
-	while((i<g_filas-1) || (j<g_columnas-1)){
-		if(counter!=0){
-			if(counter%4==1){
-				if(spanningTree[i][j]&1){
-					counter--;
-					j++;
-                    printf("%d - %d\n",i,j);
-                    resultadopledge[i][j] = 1; 
-				}else if((spanningTree[i][j]>>1)&1){
-					i++;
-                    resultadopledge[i][j] = 1; 
-				}else{
-					counter++;
+    int pXInicio = 0, pYInicio = 0, pCounter = 0, numPos = 0;
+	laberinto[0][0] -= 4;
+	while((pXInicio < g_filas-1) || (pYInicio < g_columnas-1)){
+		if(pCounter != 0){
+			if(pCounter%4 == 1){
+				if(laberinto[pXInicio][pYInicio]&1){
+					pCounter--;
+					pYInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; 
 				}
-			}else if(counter%4==0){
-				if((spanningTree[i][j]>>3)&1){
-					counter--;
-					i--;
-                    printf("%d - %d\n",i,j);
-                     resultadopledge[i][j] = 1; 
-				}else if(spanningTree[i][j]&1){
-					j++;
-                    resultadopledge[i][j] = 1; 
-				}else{
-					counter++;
+				else if((laberinto[pXInicio][pYInicio]>>1)&1){
+					pXInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
 				}
-			}else if(counter%4==3){
-				if((spanningTree[i][j]>>2)&1){
-					counter--;
-					j--;
-                    printf("%d - %d\n",i,j);
-                     resultadopledge[i][j] = 1; 
-				}else if((spanningTree[i][j]>>3)&1){
-					i--;
-                    resultadopledge[i][j] = 1; 
-				}else{
-					counter++;
-				}
-			}else{
-				if((spanningTree[i][j]>>1)&1){
-					counter--;
-					i++;
-                    printf("%d - %d\n",i,j);
-                     resultadopledge[i][j] = 1; 
-				}else if((spanningTree[i][j]>>2)&1){
-					j--;
-                    resultadopledge[i][j] = 1; 
-				}else{
-					counter++;
-				}
+				else
+					pCounter++;
 			}
-		}else{
-			if(!(spanningTree[i][j]&1)){
-				counter++;
-                printf("%d - %d\n",i,j);
-                 resultadopledge[i][j] = 1; 
-			}else{
-				j++;
+			else if(pCounter%4 == 0){
+				if((laberinto[pXInicio][pYInicio]>>3)&1){
+					pCounter--;
+					pXInicio--;
+					resultadopledge[pXInicio][pYInicio]++; 
+				}
+				else if(laberinto[pXInicio][pYInicio]&1){
+					pYInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else
+					pCounter++;
+			}
+			else if(pCounter%4 == 3){
+				if((laberinto[pXInicio][pYInicio]>>2)&1){
+					pCounter--;
+					pYInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else if((laberinto[pXInicio][pYInicio]>>3)&1){
+					pXInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else
+					pCounter++;
+			}
+			else{
+				if((laberinto[pXInicio][pYInicio]>>1)&1){
+					pCounter--;
+					pXInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else if((laberinto[pXInicio][pYInicio]>>2)&1){
+					pYInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else
+					pCounter++;
 			}
 		}
-		k++;
+		else{
+			if(!(laberinto[pXInicio][pYInicio]&1)){
+				pCounter++;
+                resultadopledge[pXInicio][pYInicio]++; //OJO
+			}
+			else{
+				pYInicio++;
+                resultadopledge[pXInicio][pYInicio]++; //OJO
+			}
+		}
+		numPos++;
 	}
-	spanningTree[0][0]+=4;
+	laberinto[0][0]+=4;
 }
 
 
@@ -370,7 +389,7 @@ void resuelveIzquierda(){
 
 	while(!(pXInicio == (g_columnas-1) && pYInicio == (g_filas-1))){ 
 		i++;
-		numPos = spanningTree[pXInicio][pYInicio];
+		numPos = laberinto[pXInicio][pYInicio];
 		//printf("me quede pegado en x: %d y en la Y: %d \n", pXInicio, pYInicio);
 		if(direccion == 3){ //SI estamos caminando hacia el norte
 			//printf("estoy en norte\n");
