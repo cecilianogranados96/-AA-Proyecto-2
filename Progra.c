@@ -32,6 +32,7 @@ gboolean Tremaux= TRUE, Fattah = TRUE;
 char buf[14], buf2[100];
 
 int **resultadoIzquierda, **resultadoDerecha;
+int **resultadoraton, **resultadopledge;
 
 int **laberinto, **arbolExpansion;
 int *filaFrontera, *columnaFrontera;
@@ -435,19 +436,90 @@ void on_btnGrabar_clicked(){
 int inicializarRespuestas(){
 	resultadoIzquierda	= (int **)malloc((g_filas)*sizeof(int *));
 	resultadoDerecha 	= (int **)malloc((g_filas)*sizeof(int *));
+	resultadopledge		= (int **)malloc((g_filas)*sizeof(int *));
+	resultadoraton		= (int **)malloc((g_filas)*sizeof(int *));
 
 	for (i = 0; i < g_filas; i++){
-		resultadoIzquierda[i]	= (int *)malloc((g_columnas)*sizeof(int));   
-		resultadoDerecha[i]	= (int *)malloc((g_columnas)*sizeof(int));   
+		resultadoIzquierda[i]= (int *)malloc((g_columnas)*sizeof(int));   
+		resultadoDerecha[i]	 = (int *)malloc((g_columnas)*sizeof(int));
+		resultadopledge[i]	 = (int *)malloc((g_columnas)*sizeof(int));
+		resultadoraton[i]	 = (int *)malloc((g_columnas)*sizeof(int));
     }
 
 	for (i = 0; i < g_filas; i++)
       	for (j = 0; j < g_columnas; j++){
-			resultadoIzquierda[i][j] = 0;
-			resultadoDerecha[i][j] = 0;
+			resultadoIzquierda[i][j]= 0;
+			resultadoDerecha[i][j] 	= 0;
+			resultadopledge[i][j] 	= 0;
+			resultadoraton[i][j] 	= 0;
         }
 	
 	return 1;
+}
+
+gboolean avanzar(int direccion, int direccionAnterior,int i, int j){
+	if((direccionAnterior += 2)%4 == direccion)
+		return FALSE;
+	else if((direccion == 0) && (arbolExpansion[i][j]&1))
+		return TRUE;
+	else if((direccion == 1) && ((arbolExpansion[i][j]>>1)&1))
+		return TRUE;
+	else if((direccion == 2) && ((arbolExpansion[i][j]>>2)&1))
+		return TRUE;
+	else if((direccion == 3) && ((arbolExpansion[i][j]>>3)&1))
+		return TRUE;
+	return FALSE;
+}
+
+void raton(){
+	int pXInicio = 0, pYInicio = 0, numPos = 0, direccion = 0;
+	int cambioDireccion, direccionRandom;
+	arbolExpansion[0][0] -= 4;
+	
+	while((pXInicio < g_filas-1) || (pYInicio < g_columnas-1)){
+		cambioDireccion = 0;
+		if(arbolExpansion[pXInicio][pYInicio] == 1)
+			direccion = 0;
+		else if(arbolExpansion[pXInicio][pYInicio] == 2)
+			direccion = 1;
+		else if(arbolExpansion[pXInicio][pYInicio] == 4)
+			direccion = 2;
+		else if(arbolExpansion[pXInicio][pYInicio] == 8)
+			direccion = 3;
+		else
+			while(!cambioDireccion){
+				direccionRandom = rand()%4;
+				if(avanzar(direccionRandom,direccion,pXInicio,pYInicio)){
+					cambioDireccion = 1;
+					direccion = direccionRandom;
+				}
+			}
+		if(direccion == 0){
+			visitadas++;
+			pYInicio++;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else if(direccion == 1){
+			visitadas++;
+			pXInicio++;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else if(direccion == 2){
+			visitadas++;
+			if(pYInicio > 0)
+				pYInicio--;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else{
+			visitadas++;
+			if(pXInicio > 0)
+				pXInicio--;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		numPos++;
+	}
+	arbolExpansion[0][0] += 4;
+	visitadas++;
 }
 
 gboolean preguntaSur(int pNum){
@@ -647,6 +719,90 @@ void resuelveIzquierda(){	/// REGLA IZQUIERDA
 	visitadas++;
 }
 
+void pledge(){
+    int pXInicio = 0, pYInicio = 0, pCounter = 0, numPos = 0;
+	arbolExpansion[0][0] -= 4;
+	while((pXInicio < g_filas-1) || (pYInicio < g_columnas-1)){
+		if(pCounter != 0){
+			if(pCounter%4 == 1){
+				if(arbolExpansion[pXInicio][pYInicio]&1){
+					pCounter--;
+					pYInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+                    visitadas++;
+				}
+				else if((arbolExpansion[pXInicio][pYInicio]>>1)&1){
+					pXInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+                    visitadas++;
+				}
+				else
+					pCounter++;
+			}
+			else if(pCounter%4 == 0){
+				if((arbolExpansion[pXInicio][pYInicio]>>3)&1){
+					pCounter--;
+					pXInicio--;
+					resultadopledge[pXInicio][pYInicio]++; //OJO
+					visitadas++;
+				}
+				else if(arbolExpansion[pXInicio][pYInicio]&1){
+					pYInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+                    visitadas++;
+				}
+				else
+					pCounter++;
+			}
+			else if(pCounter%4 == 3){
+				if((arbolExpansion[pXInicio][pYInicio]>>2)&1){
+					pCounter--;
+					pYInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+                    visitadas++;
+				}
+				else if((arbolExpansion[pXInicio][pYInicio]>>3)&1){
+					pXInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+                    visitadas++;
+				}
+				else
+					pCounter++;
+			}
+			else{
+				if((arbolExpansion[pXInicio][pYInicio]>>1)&1){
+					pCounter--;
+					pXInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+                    visitadas++;
+				}
+				else if((arbolExpansion[pXInicio][pYInicio]>>2)&1){
+					pYInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+                    visitadas++;
+				}
+				else
+					pCounter++;
+			}
+		}
+		else{
+			if(!(arbolExpansion[pXInicio][pYInicio]&1)){
+				pCounter++;
+                resultadopledge[pXInicio][pYInicio]++; //OJO
+                visitadas++;
+			}
+			else{
+				pYInicio++;
+                resultadopledge[pXInicio][pYInicio]++; //OJO
+                visitadas++;
+			}
+		}
+		numPos++;
+	}
+	arbolExpansion[0][0]+=4;
+	visitadas++;
+}
+
 void on_draw2(GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	int mult = 0, a;
 	float w, t, p, q, alpha;
@@ -674,8 +830,13 @@ void on_draw2(GtkWidget *widget, cairo_t *cr, gpointer user_data){
 	for(int x = -p; x < p; x += 32){						//Las imagenes son de 32x32
 		for(int y = -q; y < q; y += 32){
 			if(ratAle){
-				cairo_set_source_rgb(cr, 0.901, 0.098, 0.294);	//Rojo
-				mult++;
+				alpha = 0.20+((float)(resultadoDerecha[filas][columnas])/10)*1.5;
+				cairo_set_source_rgba(cr, 0.901, 0.098, 0.294, alpha);	//Rojo
+				if(resultadoraton[filas][columnas]){
+					cairo_rectangle(cr, (x+8)+((16/a)*mult), y+8, 16/a, 16);
+					cairo_fill(cr);
+					mult++;
+				}
 			}
 			if(manDer){
 				alpha = 0.20+((float)(resultadoDerecha[filas][columnas])/10)*2.5;
@@ -696,8 +857,13 @@ void on_draw2(GtkWidget *widget, cairo_t *cr, gpointer user_data){
 				}
 			}
 			if(Pledge){
+				alpha = 0.20+((float)(resultadoDerecha[filas][columnas])/10)*2.5;
 				cairo_set_source_rgb(cr, 0.000, 0.509, 0.784);	//Azul
-				mult++;
+				if(resultadopledge[filas][columnas]){
+					cairo_rectangle(cr, (x+8)+((16/a)*mult), y+8, 16/a, 16);
+					cairo_fill(cr);
+					mult++;
+				}
 			}
 			if(Tremaux){
 				cairo_set_source_rgb(cr, 0.960, 0.509, 0.188);	//Naranja
@@ -765,6 +931,7 @@ void on_btnResolver_clicked(){
 		gtk_text_buffer_delete(g_buffer, &start, &end);
 		if(ratAle){
 			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Ratón aleatorio:\n", -1, rojo, NULL);
+			raton();
 			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
 			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, rojo, NULL);
 			visitadas = 0;
@@ -789,6 +956,7 @@ void on_btnResolver_clicked(){
 		}
 		if(Pledge){
 			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Algoritmo de Pledge:\n", -1, azul, NULL);
+			pledge();
 			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
 			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, azul, NULL);
 			visitadas = 0;

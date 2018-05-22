@@ -13,11 +13,14 @@ int laberinto [5][5] = {
 				 {8,8,8,8,9}
 };
 
+<<<<<<< HEAD
 
 
 
 
 
+=======
+>>>>>>> origin/master
 int resultado [5][5];
 int resultadoDerecha[5][5];
 int resultadoIzquierda[5][5];
@@ -165,6 +168,7 @@ bool preguntaOeste(int pNum){
 
 
 
+<<<<<<< HEAD
 int avanzar(int direccion, int direccionAnterior,int i, int j){
 	if((direccionAnterior+=2)%4==direccion){
 		return 0;
@@ -218,6 +222,64 @@ void raton(){
 		k++;
 	}
 	laberinto[0][0]+=4;
+=======
+bool avanzar(int direccion, int direccionAnterior,int i, int j){
+	if((direccionAnterior += 2)%4 == direccion)
+		return false;
+	else if((direccion == 0) && (laberinto[i][j]&1))
+		return true;
+	else if((direccion == 1) && ((laberinto[i][j]>>1)&1))
+		return true;
+	else if((direccion == 2) && ((laberinto[i][j]>>2)&1))
+		return true;
+	else if((direccion == 3) && ((laberinto[i][j]>>3)&1))
+		return true;
+	return false;
+}
+
+void raton(){
+	int pXInicio = 0, pYInicio = 0, numPos = 0, direccion = 0;
+	int cambioDireccion, direccionRandom;
+	laberinto[0][0] -= 4;
+	
+	while((pXInicio < g_filas-1) || (pYInicio < g_columnas-1)){
+		cambioDireccion = 0;
+		if(laberinto[pXInicio][pYInicio] == 1)
+			direccion = 0;
+		else if(laberinto[pXInicio][pYInicio] == 2)
+			direccion = 1;
+		else if(laberinto[pXInicio][pYInicio] == 4)
+			direccion = 2;
+		else if(laberinto[pXInicio][pYInicio] == 8)
+			direccion = 3;
+		else
+			while(!cambioDireccion){
+				direccionRandom = rand()%4;
+				if(avanzar(direccionRandom,direccion,pXInicio,pYInicio)){
+					cambioDireccion = 1;
+					direccion = direccionRandom;
+				}
+			}
+		if(direccion==0){
+			pYInicio++;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else if(direccion==1){
+			pXInicio++;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else if(direccion==2){
+			pYInicio--;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		else{
+			pXInicio--;
+            resultadoraton[pXInicio][pYInicio]++; //OJO
+		}
+		numPos++;
+	}
+	laberinto[0][0] += 4;
+>>>>>>> origin/master
 }
 
 
@@ -226,6 +288,7 @@ void raton(){
 
 
 void pledge(){
+<<<<<<< HEAD
     int i=0,j=0,counter=0,k=0;
 	laberinto[0][0]-=4;
 	while((i<g_filas-1) || (j<g_columnas-1)){
@@ -275,8 +338,39 @@ void pledge(){
                      resultadopledge[i][j] = 1; //OJO
 				}else{
 					counter++;
+=======
+    int pXInicio = 0, pYInicio = 0, pCounter = 0, numPos = 0;
+	laberinto[0][0] -= 4;
+	while((pXInicio < g_filas-1) || (pYInicio < g_columnas-1)){
+		if(pCounter != 0){
+			if(pCounter%4 == 1){
+				if(laberinto[pXInicio][pYInicio]&1){
+					pCounter--;
+					pYInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; 
 				}
+				else if((laberinto[pXInicio][pYInicio]>>1)&1){
+					pXInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else
+					pCounter++;
 			}
+			else if(pCounter%4 == 0){
+				if((laberinto[pXInicio][pYInicio]>>3)&1){
+					pCounter--;
+					pXInicio--;
+					resultadopledge[pXInicio][pYInicio]++; 
+				}
+				else if(laberinto[pXInicio][pYInicio]&1){
+					pYInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+>>>>>>> origin/master
+				}
+				else
+					pCounter++;
+			}
+<<<<<<< HEAD
 		}else{
 			if(!(laberinto[i][j]&1)){
 				counter++;
@@ -284,9 +378,46 @@ void pledge(){
 			}else{
 				j++;
                  resultadopledge[i][j] = 1; //OJO
+=======
+			else if(pCounter%4 == 3){
+				if((laberinto[pXInicio][pYInicio]>>2)&1){
+					pCounter--;
+					pYInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else if((laberinto[pXInicio][pYInicio]>>3)&1){
+					pXInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else
+					pCounter++;
+			}
+			else{
+				if((laberinto[pXInicio][pYInicio]>>1)&1){
+					pCounter--;
+					pXInicio++;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else if((laberinto[pXInicio][pYInicio]>>2)&1){
+					pYInicio--;
+                    resultadopledge[pXInicio][pYInicio]++; //OJO
+				}
+				else
+					pCounter++;
+>>>>>>> origin/master
 			}
 		}
-		k++;
+		else{
+			if(!(laberinto[pXInicio][pYInicio]&1)){
+				pCounter++;
+                resultadopledge[pXInicio][pYInicio]++; //OJO
+			}
+			else{
+				pYInicio++;
+                resultadopledge[pXInicio][pYInicio]++; //OJO
+			}
+		}
+		numPos++;
 	}
 	laberinto[0][0]+=4;
 }
