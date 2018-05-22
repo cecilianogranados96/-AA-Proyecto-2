@@ -16,18 +16,27 @@ GtkWidget		*g_areaEscribir;
 GtkTextBuffer	*g_buffer;
 GtkTextIter 	end, start;
 
+GtkTextTag *rojo;
+GtkTextTag *verde;
+GtkTextTag *amarillo;
+GtkTextTag *azul;
+GtkTextTag *naranja;
+GtkTextTag *morado;
+
 gboolean activadoMC = TRUE, activadoMS = FALSE;
 
 gboolean ratAle = TRUE, manDer = TRUE;
 gboolean manIzq = TRUE, Pledge = TRUE;
 gboolean Tremaux= TRUE, Fattah = TRUE;
 
+char buf[14], buf2[100];
+
 int **resultadoIzquierda, **resultadoDerecha;
 
 int **laberinto, **arbolExpansion;
 int *filaFrontera, *columnaFrontera;
 
-int n = -1, c = 0, contador = -1, cantZoom = 2;
+int n = -1, c = 0, visitadas = 0, contador = -1, cantZoom = 2;
 int	g_zoomX = 0, g_zoomY = 0, g_movX = 0, g_movY = 0;
 
 int g_filas, g_columnas, direccion, i, j;
@@ -312,6 +321,9 @@ void on_btnGenerar_clicked(){
 	
 	int respuesta = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (respuesta == GTK_RESPONSE_ACCEPT) {
+		gtk_text_buffer_get_bounds (g_buffer, &start, &end);
+		gtk_text_buffer_delete(g_buffer, &start, &end);
+		
 		gtk_widget_add_events(g_winPrincipal, GDK_SCROLL_MASK);
 		gtk_widget_add_events(g_winPrincipal, GDK_BUTTON_PRESS_MASK);
 		
@@ -332,6 +344,7 @@ void on_btnGenerar_clicked(){
 	}
 	gtk_widget_destroy (dialog);
 }
+
 
 ///---------------------------------------------------------------------
 /// Botón leer
@@ -461,24 +474,30 @@ gboolean preguntaOeste(int pNum){
 	return FALSE;
 }
 
-/// REGLA DERECHA
-void resuelveDerecha(){
+void resuelveDerecha(){		/// REGLA DERECHA
 	int pXInicio = 0, pYInicio = 0;
 	int numPos = 0, i = 0;
-
+	
 	resultadoDerecha[pXInicio][pYInicio] = 1;
 	direccion = 0;
 	
 	while(!(pXInicio == (g_columnas-1) && pYInicio == (g_filas-1))){ 
 		i++;
 		numPos = arbolExpansion[pXInicio][pYInicio];
+		
 		if(direccion == 3){
 			if(preguntaEste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pYInicio++;
 				direccion = 0;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
 			else if(preguntaNorte(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pXInicio--;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
@@ -486,11 +505,17 @@ void resuelveDerecha(){
 		}
 		else if(direccion == 2){
 			if(preguntaNorte(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pXInicio--;
 				direccion = 3;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
 			else if(preguntaOeste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pYInicio--;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
@@ -498,11 +523,17 @@ void resuelveDerecha(){
 		}
 		else if(direccion == 1){
 			if(preguntaOeste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pYInicio--;
 				direccion = 2;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
 			else if(preguntaSur(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pXInicio++;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
@@ -510,21 +541,27 @@ void resuelveDerecha(){
 		}
 		else if(direccion == 0){
 			if(preguntaSur(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pXInicio++;
 				direccion = 1;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
 			else if(preguntaEste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+				visitadas++;
 				pYInicio++;
 				resultadoDerecha[pXInicio][pYInicio]++;
 			}
 			else direccion = 3;
 		}
 	}
+	visitadas++;
 }
 
-/// REGLA IZQUIERDA
-void resuelveIzquierda(){
+void resuelveIzquierda(){	/// REGLA IZQUIERDA
 	int pXInicio = 0, pYInicio = 0;
 	int numPos = 0, i = 0;
 
@@ -536,11 +573,17 @@ void resuelveIzquierda(){
 		numPos = arbolExpansion[pXInicio][pYInicio];
 		if(direccion == 3){
 			if(preguntaOeste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pYInicio--;
 				direccion = 2;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
 			else if(preguntaNorte(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pXInicio--;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
@@ -548,11 +591,17 @@ void resuelveIzquierda(){
 		}
 		else if(direccion == 2){
 			if(preguntaSur(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pXInicio++;
 				direccion = 1;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
 			else if(preguntaOeste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pYInicio--;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
@@ -560,11 +609,17 @@ void resuelveIzquierda(){
 		}
 		else if(direccion == 1){
 			if(preguntaEste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pYInicio++;
 				direccion = 0;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
 			else if(preguntaSur(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pXInicio++;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
@@ -572,17 +627,24 @@ void resuelveIzquierda(){
 		}
 		else if(direccion == 0){
 			if(preguntaNorte(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pXInicio--;
 				direccion = 3;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
 			else if(preguntaEste(numPos)){
+				/*sprintf(buf, "(%d, %d)->", pXInicio, pYInicio);
+				gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+				visitadas++;
 				pYInicio++;
 				resultadoIzquierda[pXInicio][pYInicio]++;
 			}
 			else direccion = 2;
 		}
 	}
+	visitadas++;
 }
 
 void on_draw2(GtkWidget *widget, cairo_t *cr, gpointer user_data){
@@ -625,7 +687,7 @@ void on_draw2(GtkWidget *widget, cairo_t *cr, gpointer user_data){
 				}
 			}
 			if(manIzq){
-				alpha = 0.20+((float)(resultadoDerecha[filas][columnas])/10)*2.5;
+				alpha = 0.20+((float)(resultadoIzquierda[filas][columnas])/10)*2.5;
 				cairo_set_source_rgba(cr, 1.000, 0.882, 0.098, alpha);	//Amarillo
 				if(resultadoIzquierda[filas][columnas]){
 					cairo_rectangle(cr, (x+8)+((16/a)*mult), y+8, 16/a, 16);
@@ -702,24 +764,46 @@ void on_btnResolver_clicked(){
 		gtk_text_buffer_get_bounds (g_buffer, &start, &end);
 		gtk_text_buffer_delete(g_buffer, &start, &end);
 		if(ratAle){
-			gtk_text_buffer_insert (g_buffer, &end,"Ratón aleatorio\n\n", -1);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Ratón aleatorio:\n", -1, rojo, NULL);
+			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, rojo, NULL);
+			visitadas = 0;
 		}
 		if(manDer){
+			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Regla de la mano derecha:\n", -1, verde, NULL);
 			resuelveDerecha();
-			gtk_text_buffer_insert (g_buffer, &end,"Regla de la mano derecha\n\n", -1);
+			/*sprintf(buf, "(%d, %d)\n", g_filas-1, g_columnas-1);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, verde, NULL);*/
+			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, verde, NULL);
+			visitadas = 0;
 		}
 		if(manIzq){
+			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Regla de la mano izquierda:\n", -1, amarillo, NULL);
 			resuelveIzquierda();
-			gtk_text_buffer_insert (g_buffer, &end,"Regla de la mano izquierda\n\n", -1);
+			/*sprintf(buf, "(%d, %d)\n", g_filas-1, g_columnas-1);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf, -1, amarillo, NULL);*/
+			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, amarillo, NULL);
+			visitadas = 0;
 		}
 		if(Pledge){
-			gtk_text_buffer_insert (g_buffer, &end,"Algoritmo de Pledge\n\n", -1);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Algoritmo de Pledge:\n", -1, azul, NULL);
+			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, azul, NULL);
+			visitadas = 0;
 		}
 		if(Tremaux){
-			gtk_text_buffer_insert (g_buffer, &end,"Algoritmo de Trémaux\n\n", -1);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Algoritmo de Trémaux:\n", -1, naranja, NULL);
+			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, naranja, NULL);
+			visitadas = 0;
 		}
 		if(Fattah){
-			gtk_text_buffer_insert (g_buffer, &end,"Algoritmo de Fattah\n", -1);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end,"Algoritmo de Fattah:\n", -1, morado, NULL);
+			sprintf(buf2, "Casillas vistadas: %d\n\n", visitadas);
+			gtk_text_buffer_insert_with_tags(g_buffer, &end, buf2, -1, morado, NULL);
+			visitadas = 0;
 		}
 		
 		g_signal_connect(g_areaPintado, "draw", G_CALLBACK (on_draw2), NULL);
@@ -733,6 +817,7 @@ void on_btnResolver_clicked(){
 void on_winPrincipal_destroy (){
 	gtk_main_quit();
 }
+
 
 ///---------------------------------------------------------------------
 /// Interfaz
@@ -748,6 +833,15 @@ void crearInterfaz(){
 	g_btnGrabar 	= GTK_WIDGET(gtk_builder_get_object(builder, "btnGrabar"));
 	g_buffer 		= gtk_text_view_get_buffer (GTK_TEXT_VIEW (g_areaEscribir));
 	
+	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (g_areaEscribir), TRUE);
+	
+	rojo 	 = gtk_text_buffer_create_tag (g_buffer, "rojo", "foreground", "#e6194b", NULL);
+	verde 	 = gtk_text_buffer_create_tag (g_buffer, "verde", "foreground", "#3cb44b", NULL);
+	amarillo = gtk_text_buffer_create_tag (g_buffer, "amarillo", "foreground", "#ffe119", NULL);
+	azul	 = gtk_text_buffer_create_tag (g_buffer, "azul", "foreground", "#0082c8", NULL);
+	naranja	 = gtk_text_buffer_create_tag (g_buffer, "naranja", "foreground", "#f58231", NULL);
+	morado	 = gtk_text_buffer_create_tag (g_buffer, "morado", "foreground", "#911eb4", NULL);
+									
 	gtk_widget_set_sensitive (g_btnResolver, FALSE);
 	gtk_widget_set_sensitive (g_btnGrabar, FALSE);
 	
@@ -760,6 +854,8 @@ void crearInterfaz(){
 }
 
 
+///---------------------------------------------------------------------
+/// Main
 int main(int argc, char **argv){
 	srand(time(NULL));
 	gtk_init(&argc, &argv);
